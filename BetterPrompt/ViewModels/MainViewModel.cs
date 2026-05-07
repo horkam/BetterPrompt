@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
+using System.Windows.Media;
 
 namespace BetterPrompt.ViewModels;
 
@@ -45,6 +46,11 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private int _statCharsRemoved;
     [ObservableProperty] private ObservableCollection<string> _changes = [];
     [ObservableProperty] private ObservableCollection<string> _fileTree = [];
+    [ObservableProperty] private AppTheme _currentTheme;
+
+    public bool IsThemeDark   { get => CurrentTheme == AppTheme.Dark;   set { if (value) CurrentTheme = AppTheme.Dark; } }
+    public bool IsThemeLight  { get => CurrentTheme == AppTheme.Light;  set { if (value) CurrentTheme = AppTheme.Light; } }
+    public bool IsThemeSystem { get => CurrentTheme == AppTheme.System; set { if (value) CurrentTheme = AppTheme.System; } }
 
     public static readonly List<OllamaModelOption> SuggestedModels =
     [
@@ -68,12 +74,24 @@ public partial class MainViewModel : ObservableObject
         _learningStore = new LearningStore();
         _ollamaOptimizer = new OllamaOptimizer(Settings);
         UpdatePullCommand(Settings.OllamaModel);
+        // Set backing field directly — theme was already applied by App.OnStartup
+        _currentTheme = Settings.Theme;
 
         _ = CheckOllamaAsync();
     }
 
     partial void OnHasCodebaseChanged(bool value) => OnPropertyChanged(nameof(CanOptimize));
     partial void OnIsOptimizingChanged(bool value) => OnPropertyChanged(nameof(CanOptimize));
+
+    partial void OnCurrentThemeChanged(AppTheme value)
+    {
+        ThemeService.Apply(value);
+        Settings.Theme = value;
+        _settingsService.Save(Settings);
+        OnPropertyChanged(nameof(IsThemeDark));
+        OnPropertyChanged(nameof(IsThemeLight));
+        OnPropertyChanged(nameof(IsThemeSystem));
+    }
 
     partial void OnCodebasePathChanged(string value)
     {
