@@ -7,6 +7,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <!-- 0.0.0 triggers the "dev" label in UpdateService; CI overrides with -p:Version=X.Y.Z -->
+    <Version>0.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
