@@ -125,14 +125,9 @@ Or open `BetterPrompt.slnx` in Visual Studio 2022+ and press F5.
 
 ### Releasing a new version
 
-Tag a commit and push — GitHub Actions builds and publishes the installer automatically:
+Every push to `main` triggers an automatic release. The workflow bumps the patch version in `version.txt`, builds a self-contained installer, and publishes it to the [Releases](https://github.com/horkam/BetterPrompt/releases) page within a few minutes. The version badge above updates automatically once the release is live.
 
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-The workflow publishes a self-contained `BetterPrompt-Setup.exe` to the [Releases](https://github.com/horkam/BetterPrompt/releases) page within a few minutes.
+To cut a specific version manually (e.g. a minor or major bump), update `version.txt` yourself before merging, or use the **Manual Release** workflow from the Actions tab.
 
 ---
 

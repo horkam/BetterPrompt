@@ -1,10 +1,13 @@
-name: Release
+name: Manual Release
 
-# Trigger by pushing a version tag: git tag v1.0.0 && git push origin v1.0.0
+# Manual override — use this to cut a specific version without pushing to main.
+# Run from the Actions tab: select this workflow, click "Run workflow", enter the version.
 on:
-  push:
-    tags:
-      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. 1.2.0)'
+        required: true
 
 permissions:
   contents: write   # needed to create the GitHub Release and upload assets
@@ -24,11 +27,11 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Extract version from tag
+      - name: Set version
         id: version
         shell: pwsh
         run: |
-          $ver = "${{ github.ref_name }}".TrimStart('v')
+          $ver = "${{ github.event.inputs.version }}".TrimStart('v')
           "VERSION=$ver" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Restore

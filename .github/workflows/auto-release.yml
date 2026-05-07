@@ -1,0 +1,82 @@
+name: Auto Release
+
+# Runs on every push to main — bumps the patch version, builds the installer,
+# creates a GitHub Release, then commits version.txt back. The commit back uses
+# GITHUB_TOKEN so it does NOT re-trigger this workflow (GitHub's built-in loop guard).
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-2025
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump patch version
+        id: version
+        shell: pwsh
+        run: |
+          $current = (Get-Content version.txt -Raw).Trim()
+          $parts = $current.Split('.')
+          $parts[2] = [int]$parts[2] + 1
+          $new = $parts -join '.'
+          Set-Content version.txt $new -NoNewline
+          "VERSION=$new" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore BetterPrompt/BetterPrompt.csproj
+
+      - name: Publish — self-contained single-file win-x64
+        shell: pwsh
+        run: |
+          dotnet publish BetterPrompt/BetterPrompt.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:Version=${{ steps.version.outputs.VERSION }} `
+            -o publish
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
+            /DAppVersion=${{ steps.version.outputs.VERSION }} `
+            installer\BetterPrompt.iss
+
+      - name: Commit and tag version bump
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add version.txt
+          git commit -m "chore: bump version to ${{ steps.version.outputs.VERSION }} [skip ci]"
+          git tag v${{ steps.version.outputs.VERSION }}
+          git push origin main --follow-tags
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          name: "BetterPrompt v${{ steps.version.outputs.VERSION }}"
+          files: installer/Output/BetterPrompt-Setup.exe
+          generate_release_notes: true
+          fail_on_unmatched_files: true
