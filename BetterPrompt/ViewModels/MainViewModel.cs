@@ -3,9 +3,9 @@ using BetterPrompt.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
-using System.Windows.Media;
 
 namespace BetterPrompt.ViewModels;
 
@@ -15,6 +15,7 @@ public partial class MainViewModel : ObservableObject
     private readonly SettingsService _settingsService;
     private readonly LearningStore _learningStore;
     private readonly OllamaOptimizer _ollamaOptimizer;
+    private readonly UpdateService _updateService;
 
     private PromptOptimizerService? _optimizer;
     private CodebaseContext? _context;
@@ -47,6 +48,12 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<string> _changes = [];
     [ObservableProperty] private ObservableCollection<string> _fileTree = [];
     [ObservableProperty] private AppTheme _currentTheme;
+    [ObservableProperty] private bool _updateAvailable;
+    [ObservableProperty] private bool _updateChecked;
+    [ObservableProperty] private string _latestVersion = string.Empty;
+    [ObservableProperty] private string _updateStatusMessage = string.Empty;
+
+    public string CurrentVersion => _updateService.CurrentVersion;
 
     public bool IsThemeDark   { get => CurrentTheme == AppTheme.Dark;   set { if (value) CurrentTheme = AppTheme.Dark; } }
     public bool IsThemeLight  { get => CurrentTheme == AppTheme.Light;  set { if (value) CurrentTheme = AppTheme.Light; } }
@@ -73,11 +80,13 @@ public partial class MainViewModel : ObservableObject
         _indexer = new CodebaseIndexer(Settings);
         _learningStore = new LearningStore();
         _ollamaOptimizer = new OllamaOptimizer(Settings);
+        _updateService = new UpdateService();
         UpdatePullCommand(Settings.OllamaModel);
         // Set backing field directly — theme was already applied by App.OnStartup
         _currentTheme = Settings.Theme;
 
         _ = CheckOllamaAsync();
+        _ = CheckForUpdatesAsync();
     }
 
     partial void OnHasCodebaseChanged(bool value) => OnPropertyChanged(nameof(CanOptimize));
@@ -276,6 +285,42 @@ public partial class MainViewModel : ObservableObject
 
     private void UpdatePullCommand(string model)
         => OllamaPullCommand = $"ollama pull {model}";
+
+    [RelayCommand]
+    private async Task CheckForUpdatesAsync()
+    {
+        UpdateStatusMessage = "Checking for updates...";
+        UpdateChecked = false;
+        UpdateAvailable = false;
+
+        var result = await _updateService.CheckAsync();
+        UpdateChecked = true;
+
+        if (!result.CheckSucceeded)
+        {
+            UpdateStatusMessage = "Could not reach GitHub — check your internet connection.";
+            return;
+        }
+
+        if (result.UpdateAvailable && result.LatestVersion is not null)
+        {
+            LatestVersion = result.LatestVersion;
+            UpdateAvailable = true;
+            UpdateStatusMessage = $"Update available: v{result.LatestVersion}";
+        }
+        else
+        {
+            UpdateStatusMessage = $"You're up to date (v{CurrentVersion}).";
+        }
+    }
+
+    [RelayCommand]
+    private void OpenReleases()
+        => Process.Start(new ProcessStartInfo(UpdateService.ReleasesUrl) { UseShellExecute = true });
+
+    [RelayCommand]
+    private void OpenGitHub()
+        => Process.Start(new ProcessStartInfo(UpdateService.GitHubUrl) { UseShellExecute = true });
 }
 
 public record OllamaModelOption(string ModelId, string DisplayName, string Description);
