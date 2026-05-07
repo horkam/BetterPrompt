@@ -2,32 +2,32 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- Colors -->
-    <Color x:Key="BgDeepColor">#FF0D0D0D</Color>
-    <Color x:Key="BgPanelColor">#FF1A1A1A</Color>
-    <Color x:Key="BgCardColor">#FF232323</Color>
-    <Color x:Key="BgInputColor">#FF2A2A2A</Color>
+    <Color x:Key="BgDeepColor">#FFF0F0F0</Color>
+    <Color x:Key="BgPanelColor">#FFFFFFFF</Color>
+    <Color x:Key="BgCardColor">#FFE8E8E8</Color>
+    <Color x:Key="BgInputColor">#FFFFFFFF</Color>
     <Color x:Key="AccentColor">#FFE8871E</Color>
     <Color x:Key="AccentHoverColor">#FFFF9A30</Color>
-    <Color x:Key="TextPrimaryColor">#FFEFEFEF</Color>
-    <Color x:Key="TextSecondaryColor">#FF9A9A9A</Color>
-    <Color x:Key="TextMutedColor">#FF5A5A5A</Color>
-    <Color x:Key="BorderColor">#FF333333</Color>
-    <Color x:Key="GreenColor">#FF4CAF7D</Color>
+    <Color x:Key="TextPrimaryColor">#FF1A1A1A</Color>
+    <Color x:Key="TextSecondaryColor">#FF444444</Color>
+    <Color x:Key="TextMutedColor">#FF888888</Color>
+    <Color x:Key="BorderColor">#FFD0D0D0</Color>
+    <Color x:Key="GreenColor">#FF2D7A4F</Color>
 
-    <SolidColorBrush x:Key="BgDeep" Color="{StaticResource BgDeepColor}"/>
-    <SolidColorBrush x:Key="BgPanel" Color="{StaticResource BgPanelColor}"/>
-    <SolidColorBrush x:Key="BgCard" Color="{StaticResource BgCardColor}"/>
-    <SolidColorBrush x:Key="BgInput" Color="{StaticResource BgInputColor}"/>
-    <SolidColorBrush x:Key="Accent" Color="{StaticResource AccentColor}"/>
+    <SolidColorBrush x:Key="BgDeep"      Color="{StaticResource BgDeepColor}"/>
+    <SolidColorBrush x:Key="BgPanel"     Color="{StaticResource BgPanelColor}"/>
+    <SolidColorBrush x:Key="BgCard"      Color="{StaticResource BgCardColor}"/>
+    <SolidColorBrush x:Key="BgInput"     Color="{StaticResource BgInputColor}"/>
+    <SolidColorBrush x:Key="Accent"      Color="{StaticResource AccentColor}"/>
     <SolidColorBrush x:Key="AccentHover" Color="{StaticResource AccentHoverColor}"/>
-    <SolidColorBrush x:Key="TextPrimary" Color="{StaticResource TextPrimaryColor}"/>
+    <SolidColorBrush x:Key="TextPrimary"   Color="{StaticResource TextPrimaryColor}"/>
     <SolidColorBrush x:Key="TextSecondary" Color="{StaticResource TextSecondaryColor}"/>
-    <SolidColorBrush x:Key="TextMuted" Color="{StaticResource TextMutedColor}"/>
-    <SolidColorBrush x:Key="Border" Color="{StaticResource BorderColor}"/>
-    <SolidColorBrush x:Key="Green" Color="{StaticResource GreenColor}"/>
-    <SolidColorBrush x:Key="BgOverlay"   Color="#CC0D0D0D"/>
-    <SolidColorBrush x:Key="BgGreenTint" Color="#FF1A2A1A"/>
-    <SolidColorBrush x:Key="TextOnAccent" Color="#FF0D0D0D"/>
+    <SolidColorBrush x:Key="TextMuted"   Color="{StaticResource TextMutedColor}"/>
+    <SolidColorBrush x:Key="Border"      Color="{StaticResource BorderColor}"/>
+    <SolidColorBrush x:Key="Green"       Color="{StaticResource GreenColor}"/>
+    <SolidColorBrush x:Key="BgOverlay"   Color="#CCF0F0F0"/>
+    <SolidColorBrush x:Key="BgGreenTint" Color="#FFD6EFE0"/>
+    <SolidColorBrush x:Key="TextOnAccent" Color="#FFFFFFFF"/>
 
     <!-- TextBox -->
     <Style TargetType="TextBox">
@@ -224,7 +224,6 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="28"/>
                             </Grid.ColumnDefinitions>
-                            <!-- placeholder so content presenter can sit over this -->
                             <Border Grid.Column="0"/>
                             <Path Grid.Column="1" Data="M 0 0 L 5 5 L 10 0"
                                   Stroke="{StaticResource TextSecondary}" StrokeThickness="1.5"
@@ -257,11 +256,9 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBox">
                     <Grid>
-                        <!-- Full-width toggle button handles all clicks -->
                         <ToggleButton x:Name="ToggleButton"
                                       Style="{StaticResource ComboBoxToggleStyle}"
                                       IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"/>
-                        <!-- Selected item display sitting on top of the toggle -->
                         <ContentPresenter x:Name="ContentSite"
                                           Content="{TemplateBinding SelectionBoxItem}"
                                           ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
@@ -304,10 +301,10 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Root" Property="Background" Value="{StaticResource BgInput}"/>
+                            <Setter TargetName="Root" Property="Background" Value="{StaticResource BgDeep}"/>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="Root" Property="Background" Value="{StaticResource BgInput}"/>
+                            <Setter TargetName="Root" Property="Background" Value="{StaticResource BgDeep}"/>
                             <Setter Property="Foreground" Value="{StaticResource Accent}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>

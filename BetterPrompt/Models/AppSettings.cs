@@ -2,6 +2,7 @@ namespace BetterPrompt.Models;
 
 public class AppSettings
 {
+    public AppTheme Theme { get; set; } = AppTheme.Dark;
     public string OllamaUrl { get; set; } = "http://localhost:11434";
     public string OllamaModel { get; set; } = "llama3.2:3b";
     public bool UseOllama { get; set; } = true;

@@ -6,6 +6,25 @@ A Windows desktop tool that helps your team write better Claude Code prompts. Po
 
 ---
 
+## Download
+
+[![Download Installer](https://img.shields.io/github/v/release/horkam/BetterPrompt?style=for-the-badge&label=Download%20Installer&color=E8871E&logo=windows&logoColor=white)](https://github.com/horkam/BetterPrompt/releases/latest/download/BetterPrompt-Setup.exe)
+&nbsp;
+[![Latest Release](https://img.shields.io/github/v/release/horkam/BetterPrompt?style=flat-square&color=555)](https://github.com/horkam/BetterPrompt/releases/latest)
+[![License](https://img.shields.io/github/license/horkam/BetterPrompt?style=flat-square)](LICENSE)
+
+**Requirements:** Windows 10 or later (64-bit) · .NET 8 is bundled — no separate install needed
+
+> **First time?** Click the orange button above, run `BetterPrompt-Setup.exe`, and follow the wizard.  
+> **Upgrading?** Just run the new installer over the top — no need to uninstall first.
+
+To pull an optional local AI model after installing:
+```
+ollama pull llama3.2:3b
+```
+
+---
+
 ## Why BetterPrompt?
 
 Vague prompts are expensive. When you write *"add an API for the workout stuff"*, Claude Code has to search your entire project to figure out what you mean — burning tokens and time. BetterPrompt turns that into:
@@ -83,29 +102,37 @@ After each optimization, a stats strip shows:
 
 ## Getting Started
 
-### Prerequisites
+### Install (recommended)
 
-- Windows 10/11
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- [Ollama](https://ollama.com) *(optional — the rule-based optimizer works without it)*
+1. Click the **Download Installer** badge above
+2. Run `BetterPrompt-Setup.exe` and follow the wizard — .NET 8 is bundled, nothing else to install
+3. *(Optional)* Install [Ollama](https://ollama.com) and pull a model for AI-assisted rewriting:
+   ```
+   ollama pull llama3.2:3b
+   ```
 
-### Build and Run
+### Build from source
+
+**Prerequisites:** Windows 10/11 · [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/horkam/BetterPrompt.git
 cd BetterPrompt
 dotnet run --project BetterPrompt/BetterPrompt.csproj
 ```
 
-Or open `BetterPrompt.sln` in Visual Studio 2022+ and press F5.
+Or open `BetterPrompt.slnx` in Visual Studio 2022+ and press F5.
 
-### Pull an Ollama Model
+### Releasing a new version
+
+Tag a commit and push — GitHub Actions builds and publishes the installer automatically:
 
 ```bash
-ollama pull llama3.2:3b
+git tag v1.0.0
+git push origin v1.0.0
 ```
 
-The app's Settings tab shows the exact pull command for whichever model you have selected, with a one-click copy button.
+The workflow publishes a self-contained `BetterPrompt-Setup.exe` to the [Releases](https://github.com/horkam/BetterPrompt/releases) page within a few minutes.
 
 ---
 
