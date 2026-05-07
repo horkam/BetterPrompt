@@ -7,6 +7,7 @@
         xmlns:conv="clr-namespace:BetterPrompt.Converters"
         mc:Ignorable="d"
         Title="BetterPrompt" Height="780" Width="1100"
+        Icon="Assets/app.ico"
         Background="{StaticResource BgDeep}"
         WindowStartupLocation="CenterScreen">
 
@@ -113,6 +114,7 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
@@ -126,10 +128,22 @@
                             <TextBlock Grid.Row="0" Text="YOUR PROMPT"
                                        FontFamily="Segoe UI Semibold" FontSize="10"
                                        Foreground="{StaticResource TextMuted}" Margin="0,0,0,6"/>
-                            <TextBox Grid.Row="1" Text="{Binding RawPrompt, UpdateSourceTrigger=PropertyChanged}"
-                                     AcceptsReturn="True" TextWrapping="Wrap"
-                                     VerticalScrollBarVisibility="Auto"
-                                     FontFamily="Segoe UI" FontSize="13"/>
+                            <Grid Grid.Row="1">
+                                <TextBox Text="{Binding RawPrompt, UpdateSourceTrigger=PropertyChanged}"
+                                         AcceptsReturn="True" TextWrapping="Wrap"
+                                         VerticalScrollBarVisibility="Auto"
+                                         FontFamily="Segoe UI" FontSize="13"
+                                         IsEnabled="{Binding HasCodebase}"/>
+                                <!-- Overlay shown when no codebase is loaded -->
+                                <Border Background="#CC0D0D0D" CornerRadius="4"
+                                        Visibility="{Binding HasCodebase, Converter={StaticResource InvBoolToVis}}"
+                                        IsHitTestVisible="False">
+                                    <TextBlock Text="Index a codebase to enable prompt optimization"
+                                               Foreground="{StaticResource TextMuted}"
+                                               FontFamily="Segoe UI" FontSize="13" FontStyle="Italic"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </Grid>
                         </Grid>
 
                         <!-- Optimize button row -->
@@ -143,12 +157,130 @@
                             <Button Grid.Column="1" Content="Optimize Prompt"
                                     Padding="20,10" FontSize="14"
                                     Command="{Binding OptimizePromptCommand}"
-                                    IsEnabled="{Binding IsOptimizing, Converter={StaticResource InvBoolToVis}}"/>
+                                    IsEnabled="{Binding CanOptimize}"/>
                             <Border Grid.Column="2" Height="1" Background="{StaticResource Border}" VerticalAlignment="Center"/>
                         </Grid>
 
+                        <!-- Stats strip -->
+                        <Border Grid.Row="2" Margin="0,0,0,10"
+                                Visibility="{Binding HasOptimizedPrompt, Converter={StaticResource BoolToVis}}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Rules applied -->
+                                <Border Grid.Column="0" Background="{StaticResource BgCard}"
+                                        CornerRadius="4" Padding="10,8" Margin="0,0,6,0">
+                                    <StackPanel>
+                                        <TextBlock Text="RULES APPLIED" FontFamily="Segoe UI Semibold" FontSize="9"
+                                                   Foreground="{StaticResource TextMuted}" Margin="0,0,0,4"/>
+                                        <TextBlock Text="{Binding StatRulesApplied}" FontFamily="Segoe UI Semibold"
+                                                   FontSize="22" Foreground="{StaticResource Accent}"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- LLM used -->
+                                <Border Grid.Column="1" CornerRadius="4" Padding="10,8" Margin="0,0,6,0">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="{StaticResource BgCard}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding StatOllamaUsed}" Value="True">
+                                                    <Setter Property="Background" Value="#FF1A2A1A"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <StackPanel>
+                                        <TextBlock Text="OLLAMA PASS" FontFamily="Segoe UI Semibold" FontSize="9"
+                                                   Foreground="{StaticResource TextMuted}" Margin="0,0,0,4"/>
+                                        <TextBlock FontFamily="Segoe UI Semibold" FontSize="22">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="No"/>
+                                                    <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding StatOllamaUsed}" Value="True">
+                                                            <Setter Property="Text" Value="Yes"/>
+                                                            <Setter Property="Foreground" Value="{StaticResource Green}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Cache hit -->
+                                <Border Grid.Column="2" CornerRadius="4" Padding="10,8" Margin="0,0,6,0">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="{StaticResource BgCard}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding StatCacheHit}" Value="True">
+                                                    <Setter Property="Background" Value="#FF1A2A1A"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <StackPanel>
+                                        <TextBlock Text="CACHE HIT" FontFamily="Segoe UI Semibold" FontSize="9"
+                                                   Foreground="{StaticResource TextMuted}" Margin="0,0,0,4"/>
+                                        <TextBlock FontFamily="Segoe UI Semibold" FontSize="22">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="No"/>
+                                                    <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding StatCacheHit}" Value="True">
+                                                            <Setter Property="Text" Value="Yes"/>
+                                                            <Setter Property="Foreground" Value="{StaticResource Green}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Foreground="{StaticResource TextMuted}" FontSize="10"
+                                                   Visibility="{Binding StatCacheHit, Converter={StaticResource BoolToVis}}">
+                                            <TextBlock.Text>
+                                                <Binding Path="StatCacheScore" StringFormat="{}{0:P0} match"/>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Chars delta -->
+                                <Border Grid.Column="3" Background="{StaticResource BgCard}"
+                                        CornerRadius="4" Padding="10,8">
+                                    <StackPanel>
+                                        <TextBlock Text="CHARS DELTA" FontFamily="Segoe UI Semibold" FontSize="9"
+                                                   Foreground="{StaticResource TextMuted}" Margin="0,0,0,4"/>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom">
+                                            <TextBlock Text="{Binding StatOriginalLength}" FontFamily="Segoe UI Semibold"
+                                                       FontSize="14" Foreground="{StaticResource TextSecondary}"
+                                                       VerticalAlignment="Bottom"/>
+                                            <TextBlock Text=" → " FontFamily="Segoe UI" FontSize="12"
+                                                       Foreground="{StaticResource TextMuted}" VerticalAlignment="Bottom"/>
+                                            <TextBlock Text="{Binding StatOptimizedLength}" FontFamily="Segoe UI Semibold"
+                                                       FontSize="14" Foreground="{StaticResource Accent}"
+                                                       VerticalAlignment="Bottom"/>
+                                        </StackPanel>
+                                        <TextBlock Foreground="{StaticResource TextMuted}" FontSize="10">
+                                            <TextBlock.Text>
+                                                <Binding Path="StatCharsRemoved" StringFormat="{}{0} chars trimmed"/>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </Border>
+
                         <!-- Optimized prompt -->
-                        <Grid Grid.Row="2">
+                        <Grid Grid.Row="3">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
@@ -201,7 +333,7 @@
                         </Grid>
 
                         <!-- Changes + copy -->
-                        <Grid Grid.Row="3" Margin="0,10,0,0">
+                        <Grid Grid.Row="4" Margin="0,10,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
@@ -226,11 +358,18 @@
                                 </ItemsControl>
                             </StackPanel>
 
-                            <Button Grid.Column="1" Content="Copy to Clipboard"
-                                    Style="{StaticResource SecondaryButton}"
-                                    Command="{Binding CopyToClipboardCommand}"
-                                    IsEnabled="{Binding HasOptimizedPrompt}"
-                                    VerticalAlignment="Bottom" Padding="14,8"/>
+                            <StackPanel Grid.Column="1" Orientation="Vertical">
+                                <Button Content="Copy Prompt"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Command="{Binding CopyToClipboardCommand}"
+                                        IsEnabled="{Binding HasOptimizedPrompt}"
+                                        Padding="14,8"/>
+                                <Button Content="Copy Rules"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Command="{Binding CopyRulesCommand}"
+                                        IsEnabled="{Binding HasOptimizedPrompt}"
+                                        Padding="14,8" Margin="0,6,0,0"/>
+                            </StackPanel>
                         </Grid>
                     </Grid>
                 </Grid>
@@ -274,10 +413,40 @@
                                 <TextBox Text="{Binding Settings.OllamaUrl, UpdateSourceTrigger=PropertyChanged}"
                                          Margin="0,0,0,10"/>
                                 <Label Content="Model" Padding="0,0,0,4"/>
-                                <TextBox Text="{Binding Settings.OllamaModel, UpdateSourceTrigger=PropertyChanged}"
-                                         Margin="0,0,0,4"/>
-                                <TextBlock Text="Recommended: llama3.2:3b  or  phi3:mini  (run: ollama pull llama3.2:3b)"
-                                           Foreground="{StaticResource TextMuted}" FontSize="11"/>
+                                <ComboBox x:Name="ModelComboBox"
+                                          ItemsSource="{Binding SuggestedModels, RelativeSource={RelativeSource AncestorType=Window}, Mode=OneTime}"
+                                          Margin="0,0,0,8"
+                                          SelectionChanged="ModelComboBox_SelectionChanged">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="2,4">
+                                                <TextBlock Text="{Binding DisplayName}"
+                                                           Foreground="{StaticResource TextPrimary}"
+                                                           FontFamily="Segoe UI Semibold" FontSize="12"/>
+                                                <TextBlock Text="{Binding Description}"
+                                                           Foreground="{StaticResource TextMuted}"
+                                                           FontFamily="Segoe UI" FontSize="11"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <!-- Pull command row -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Background="{StaticResource BgDeep}"
+                                            BorderBrush="{StaticResource Border}" BorderThickness="1"
+                                            CornerRadius="4" Padding="8,6">
+                                        <TextBlock Text="{Binding OllamaPullCommand}"
+                                                   Foreground="{StaticResource Accent}"
+                                                   FontFamily="Cascadia Code, Consolas" FontSize="12"/>
+                                    </Border>
+                                    <Button Grid.Column="1" Content="Copy" Margin="6,0,0,0"
+                                            Padding="10,6" Style="{StaticResource SecondaryButton}"
+                                            Command="{Binding CopyPullCommandCommand}"/>
+                                </Grid>
                             </StackPanel>
                         </Border>
 

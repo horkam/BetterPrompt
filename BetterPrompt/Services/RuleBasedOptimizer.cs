@@ -19,7 +19,7 @@ public partial class RuleBasedOptimizer
         (MetaSearchFor(), ""),
     ];
 
-    public (string prompt, List<string> rulesFired) Optimize(string rawPrompt, CodebaseContext? context)
+    public (string prompt, List<string> rulesFired) Optimize(string rawPrompt, CodebaseContext? context, List<string>? expandedKeywords = null)
     {
         var prompt = rawPrompt.Trim();
         var rulesFired = new List<string>();
@@ -38,12 +38,13 @@ public partial class RuleBasedOptimizer
         // Pass 2: normalize action verb at start
         prompt = EnsureActionVerb(prompt, rulesFired);
 
-        // Pass 3: inject codebase references if we have context
-        if (context is not null)
-            prompt = InjectCodebaseReferences(prompt, context, rulesFired);
+        // Pass 3: collapse horizontal whitespace only (preserve newlines)
+        prompt = CollapseSpaces().Replace(prompt, " ").Trim();
 
-        // Pass 4: clean up extra whitespace
-        prompt = CollapseWhitespace().Replace(prompt, " ").Trim();
+        // Pass 4: inject codebase references — runs AFTER whitespace cleanup so injected
+        // newlines are not destroyed
+        if (context is not null)
+            prompt = InjectCodebaseReferences(prompt, context, rulesFired, expandedKeywords);
 
         return (prompt, rulesFired);
     }
@@ -69,61 +70,39 @@ public partial class RuleBasedOptimizer
         return prompt;
     }
 
-    private static string InjectCodebaseReferences(string prompt, CodebaseContext context, List<string> rulesFired)
+    private static readonly CodebaseSearcher Searcher = new();
+
+    private static string InjectCodebaseReferences(string prompt, CodebaseContext context, List<string> rulesFired, List<string>? expandedKeywords)
     {
-        if (context.FileSignatures.Count == 0) return prompt;
+        if (context.FileSignatures.Count == 0 && string.IsNullOrWhiteSpace(context.FileTree))
+            return prompt;
 
-        var injections = new List<string>();
+        var keywords = expandedKeywords is { Count: > 0 }
+            ? expandedKeywords
+            : SimilarityMatcher.Tokenize(prompt);
+        if (keywords.Count == 0) return prompt;
 
-        // Build a lookup: class/method name → file path
-        var symbolMap = BuildSymbolMap(context);
+        var matches = Searcher.Search(keywords, context, maxResults: 6);
+        if (matches.Count == 0) return prompt;
 
-        foreach (var (symbol, filePath) in symbolMap)
-        {
-            // Only match whole words, case-insensitive
-            var wordPattern = new Regex($@"\b{Regex.Escape(symbol)}\b", RegexOptions.IgnoreCase);
-            if (wordPattern.IsMatch(prompt))
-            {
-                var shortPath = filePath.Replace('\\', '/');
-                if (!prompt.Contains(shortPath))
-                {
-                    injections.Add($"`{symbol}` ({shortPath})");
-                    rulesFired.Add($"Injected path for: {symbol} → {shortPath}");
-                }
-            }
-        }
+        // Deduplicate by file path — keep the highest-scored match per file
+        var byFile = matches
+            .GroupBy(m => m.FilePath)
+            .Select(g => g.OrderByDescending(m => m.Score).First())
+            .OrderByDescending(m => m.Score)
+            .ToList();
 
-        if (injections.Count == 0) return prompt;
-
-        var sb = new StringBuilder(prompt);
+        var sb = new StringBuilder(prompt.TrimEnd());
         sb.AppendLine();
         sb.AppendLine();
-        sb.Append("Relevant files: ");
-        sb.Append(string.Join(", ", injections.Distinct().Take(5)));
-        return sb.ToString();
-    }
-
-    private static Dictionary<string, string> BuildSymbolMap(CodebaseContext context)
-    {
-        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var sig in context.FileSignatures)
+        sb.AppendLine("Relevant locations found in codebase:");
+        foreach (var match in byFile)
         {
-            foreach (var line in sig.Signatures.Split('\n', StringSplitOptions.RemoveEmptyEntries))
-            {
-                // Extract class names
-                var classMatch = ClassNamePattern().Match(line);
-                if (classMatch.Success)
-                    map.TryAdd(classMatch.Groups[1].Value, sig.RelativePath);
-
-                // Extract method names
-                var methodMatch = MethodNamePattern().Match(line);
-                if (methodMatch.Success)
-                    map.TryAdd(methodMatch.Groups[1].Value, sig.RelativePath);
-            }
+            sb.AppendLine($"  - {match.Description}");
+            rulesFired.Add($"Found {match.MatchKind}: {match.Symbol} in {match.FilePath}");
         }
 
-        return map;
+        return sb.ToString().TrimEnd();
     }
 
     // Meta-instruction patterns
@@ -154,12 +133,7 @@ public partial class RuleBasedOptimizer
     [GeneratedRegex(@"\bsearch for\b\s*", RegexOptions.IgnoreCase)]
     private static partial Regex MetaSearchFor();
 
-    [GeneratedRegex(@"\s{2,}")]
-    private static partial Regex CollapseWhitespace();
+    [GeneratedRegex(@"[ \t]{2,}")]
+    private static partial Regex CollapseSpaces();
 
-    [GeneratedRegex(@"\bclass\s+(\w+)")]
-    private static partial Regex ClassNamePattern();
-
-    [GeneratedRegex(@"\b(?:public|private|protected|internal|async)\s+\S+\s+(\w+)\s*\(")]
-    private static partial Regex MethodNamePattern();
 }

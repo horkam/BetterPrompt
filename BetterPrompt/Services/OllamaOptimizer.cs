@@ -7,20 +7,21 @@ namespace BetterPrompt.Services;
 
 public class OllamaOptimizer
 {
-    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(60) };
+    // Generous timeout — first inference call loads the model into VRAM which can take 20-30s
+    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(180) };
 
     private const string SystemPrompt = """
         You are a prompt optimizer for Claude Code, an AI coding assistant.
-        You receive a draft prompt and optional codebase context.
+        You receive a draft prompt that has already been partially cleaned by rule-based passes.
 
-        Rewrite the prompt to be specific and actionable:
+        Your job:
+        - Rewrite it to be specific and actionable
         - Start with a clear action verb (Add, Fix, Refactor, Update, Move, etc.)
-        - Use exact file paths and class/method names from the context when relevant
-        - Remove vague phrases like "look at the code", "find where", "search for"
+        - Remove any remaining vague phrases ("look at the code", "I don't know where", etc.)
         - Be concise — every word must add meaning
-        - Do NOT add explanations or commentary
+        - Do NOT add explanations, preamble, or commentary
 
-        Return ONLY the rewritten prompt. Nothing else.
+        Return ONLY the rewritten prompt text. Nothing else.
         """;
 
     private readonly AppSettings _settings;
@@ -35,7 +36,11 @@ public class OllamaOptimizer
         try
         {
             var response = await Http.GetAsync($"{_settings.OllamaUrl}/api/tags");
-            return response.IsSuccessStatusCode;
+            if (!response.IsSuccessStatusCode) return false;
+
+            // Also verify the configured model is actually pulled
+            var json = await response.Content.ReadAsStringAsync();
+            return json.Contains(_settings.OllamaModel.Split(':')[0], StringComparison.OrdinalIgnoreCase);
         }
         catch
         {
@@ -43,13 +48,16 @@ public class OllamaOptimizer
         }
     }
 
-    public async Task<string?> OptimizeAsync(string prompt, CodebaseContext? context, IProgress<string>? progress = null)
+    public async Task<(string? result, string? error)> OptimizeAsync(
+        string prompt,
+        CodebaseContext? context,
+        IProgress<string>? progress = null)
     {
-        progress?.Report("Sending to Ollama...");
+        progress?.Report($"Sending to Ollama ({_settings.OllamaModel})...");
 
-        var userContent = context is not null
-            ? $"{context.ToContextBlock()}\n---\nDraft prompt to optimize:\n{prompt}"
-            : $"Draft prompt to optimize:\n{prompt}";
+        // Only send the prompt text to Ollama — codebase context is too large for small models
+        // and the rules pass already injected the relevant locations
+        var userContent = $"Draft prompt to optimize:\n{prompt}";
 
         var requestBody = new
         {
@@ -64,25 +72,39 @@ public class OllamaOptimizer
         };
 
         var json = JsonSerializer.Serialize(requestBody);
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        var httpContent = new StringContent(json, Encoding.UTF8, "application/json");
 
         try
         {
-            var response = await Http.PostAsync($"{_settings.OllamaUrl}/api/chat", content);
-            if (!response.IsSuccessStatusCode) return null;
+            progress?.Report($"Waiting for {_settings.OllamaModel} (may take a moment on first run)...");
+            var response = await Http.PostAsync($"{_settings.OllamaUrl}/api/chat", httpContent);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var body = await response.Content.ReadAsStringAsync();
+                return (null, $"Ollama returned {(int)response.StatusCode}: {body[..Math.Min(body.Length, 200)]}");
+            }
 
             var responseJson = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(responseJson);
 
-            return doc.RootElement
+            var result = doc.RootElement
                 .GetProperty("message")
                 .GetProperty("content")
                 .GetString()
                 ?.Trim();
+
+            return string.IsNullOrWhiteSpace(result)
+                ? (null, "Ollama returned empty content")
+                : (result, null);
         }
-        catch
+        catch (TaskCanceledException)
         {
-            return null;
+            return (null, "Ollama timed out (model may still be loading — try again in a few seconds)");
+        }
+        catch (Exception ex)
+        {
+            return (null, $"Ollama error: {ex.Message}");
         }
     }
 }

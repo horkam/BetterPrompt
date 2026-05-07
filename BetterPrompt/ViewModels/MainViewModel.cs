@@ -32,9 +32,33 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool _hasOptimizedPrompt;
     [ObservableProperty] private bool _hasCodebase;
     [ObservableProperty] private bool _fromCache;
+
+    public bool CanOptimize => HasCodebase && !IsOptimizing;
     [ObservableProperty] private int _learningEntryCount;
+    [ObservableProperty] private string _ollamaPullCommand = string.Empty;
+    [ObservableProperty] private int _statRulesApplied;
+    [ObservableProperty] private bool _statOllamaUsed;
+    [ObservableProperty] private bool _statCacheHit;
+    [ObservableProperty] private double _statCacheScore;
+    [ObservableProperty] private int _statOriginalLength;
+    [ObservableProperty] private int _statOptimizedLength;
+    [ObservableProperty] private int _statCharsRemoved;
     [ObservableProperty] private ObservableCollection<string> _changes = [];
     [ObservableProperty] private ObservableCollection<string> _fileTree = [];
+
+    public static readonly List<OllamaModelOption> SuggestedModels =
+    [
+        new("llama3.2:3b",        "Llama 3.2 3B",         "Fast, well-rounded — recommended default"),
+        new("llama3.2:1b",        "Llama 3.2 1B",         "Lightest option, fastest response"),
+        new("llama3.1:8b",        "Llama 3.1 8B",         "More capable, needs ~6 GB RAM"),
+        new("qwen2.5-coder:3b",   "Qwen 2.5 Coder 3B",   "Code-focused, great for prompt rewriting"),
+        new("qwen2.5-coder:7b",   "Qwen 2.5 Coder 7B",   "Best code quality, needs ~6 GB RAM"),
+        new("phi3:mini",          "Phi-3 Mini",            "Microsoft's compact model, fast"),
+        new("phi3.5:mini",        "Phi-3.5 Mini",          "Newer Phi, slightly better quality"),
+        new("mistral:7b",         "Mistral 7B",            "Strong general-purpose model"),
+        new("codellama:7b",       "Code Llama 7B",         "Meta's code-specialized model"),
+        new("deepseek-coder:6.7b","DeepSeek Coder 6.7B",  "Excellent for code tasks"),
+    ];
 
     public MainViewModel()
     {
@@ -43,9 +67,13 @@ public partial class MainViewModel : ObservableObject
         _indexer = new CodebaseIndexer(Settings);
         _learningStore = new LearningStore();
         _ollamaOptimizer = new OllamaOptimizer(Settings);
+        UpdatePullCommand(Settings.OllamaModel);
 
         _ = CheckOllamaAsync();
     }
+
+    partial void OnHasCodebaseChanged(bool value) => OnPropertyChanged(nameof(CanOptimize));
+    partial void OnIsOptimizingChanged(bool value) => OnPropertyChanged(nameof(CanOptimize));
 
     partial void OnCodebasePathChanged(string value)
     {
@@ -134,6 +162,15 @@ public partial class MainViewModel : ObservableObject
                 foreach (var c in result.Changes)
                     Changes.Add(c);
 
+                // Stats
+                StatCacheHit    = result.Source == OptimizationSource.Cache;
+                StatCacheScore  = result.CacheMatchScore ?? 0;
+                StatOllamaUsed  = result.Source is OptimizationSource.Ollama or OptimizationSource.RulesAndOllama;
+                StatRulesApplied = result.Changes.Count(c => !c.StartsWith("Ollama"));
+                StatOriginalLength  = RawPrompt.Length;
+                StatOptimizedLength = result.OptimizedPrompt.Length;
+                StatCharsRemoved    = Math.Max(0, RawPrompt.Length - result.OptimizedPrompt.Length);
+
                 LearningEntryCount = _learningStore.EntryCount;
                 HasOptimizedPrompt = true;
                 StatusMessage = $"Done. Source: {result.SourceLabel}. {LearningEntryCount} entries in learning store.";
@@ -164,6 +201,16 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void CopyRules()
+    {
+        if (Changes.Count == 0) return;
+        var text = $"Source: {SourceLabel}\n\nRules applied ({StatRulesApplied}):\n" +
+                   string.Join("\n", Changes.Select(c => $"- {c}"));
+        Clipboard.SetText(text);
+        StatusMessage = $"Copied {Changes.Count} rules to clipboard.";
+    }
+
+    [RelayCommand]
     private void SaveSettings()
     {
         _settingsService.Save(Settings);
@@ -191,4 +238,26 @@ public partial class MainViewModel : ObservableObject
             ? $"Ollama: connected ({Settings.OllamaModel})"
             : "Ollama: not running";
     }
+
+    [RelayCommand]
+    private void CopyPullCommand()
+    {
+        if (!string.IsNullOrWhiteSpace(OllamaPullCommand))
+        {
+            Clipboard.SetText(OllamaPullCommand);
+            StatusMessage = $"Copied: {OllamaPullCommand}";
+        }
+    }
+
+    // Called when Settings.OllamaModel changes via the ComboBox binding
+    public void OnModelSelected(string model)
+    {
+        Settings.OllamaModel = model;
+        UpdatePullCommand(model);
+    }
+
+    private void UpdatePullCommand(string model)
+        => OllamaPullCommand = $"ollama pull {model}";
 }
+
+public record OllamaModelOption(string ModelId, string DisplayName, string Description);
