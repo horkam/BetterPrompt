@@ -533,155 +533,296 @@
 
             <!-- NEW PROJECT TAB -->
             <TabItem Header="New Project">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="24" MaxWidth="600">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="360"/>
+                    </Grid.ColumnDefinitions>
 
-                        <TextBlock Text="NEW PROJECT SCOPE" FontFamily="Segoe UI Semibold" FontSize="10"
-                                   Foreground="{DynamicResource TextMuted}" Margin="0,0,0,4"/>
-                        <TextBlock Text="Answer the questions below and BetterPrompt will generate a CLAUDE.md and project-scope.json in your project folder — giving Claude Code full context from day one."
-                                   FontFamily="Segoe UI" FontSize="12" TextWrapping="Wrap"
-                                   Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,20"/>
+                    <!-- LEFT: Scoping form -->
+                    <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="24" MaxWidth="600">
 
-                        <!-- IDENTITY -->
-                        <TextBlock Text="IDENTITY" FontFamily="Segoe UI Semibold" FontSize="10"
-                                   Foreground="{DynamicResource TextMuted}" Margin="0,0,0,8"/>
-                        <Border Background="{DynamicResource BgCard}" CornerRadius="4" Padding="14" Margin="0,0,0,16">
-                            <StackPanel>
-                                <Label Content="Project Name" Padding="0,0,0,4"/>
-                                <TextBox Text="{Binding NewProject.ProjectName, UpdateSourceTrigger=PropertyChanged}"
-                                         Margin="0,0,0,12"/>
-
-                                <Label Content="One-line description" Padding="0,0,0,4"/>
-                                <TextBox Text="{Binding NewProject.Description, UpdateSourceTrigger=PropertyChanged}"
-                                         Margin="0,0,0,12"/>
-
-                                <Label Content="Primary goal — what problem does this solve?" Padding="0,0,0,4"/>
-                                <TextBox Text="{Binding NewProject.Goal, UpdateSourceTrigger=PropertyChanged}"
-                                         AcceptsReturn="True" TextWrapping="Wrap" Height="72"
-                                         VerticalScrollBarVisibility="Auto"/>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- AUDIENCE -->
-                        <TextBlock Text="AUDIENCE" FontFamily="Segoe UI Semibold" FontSize="10"
-                                   Foreground="{DynamicResource TextMuted}" Margin="0,0,0,8"/>
-                        <Border Background="{DynamicResource BgCard}" CornerRadius="4" Padding="14" Margin="0,0,0,16">
-                            <StackPanel>
-                                <Label Content="Who are the target users?" Padding="0,0,0,4"/>
-                                <TextBox Text="{Binding NewProject.TargetAudience, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- TECHNICAL STACK -->
-                        <TextBlock Text="TECHNICAL STACK" FontFamily="Segoe UI Semibold" FontSize="10"
-                                   Foreground="{DynamicResource TextMuted}" Margin="0,0,0,8"/>
-                        <Border Background="{DynamicResource BgCard}" CornerRadius="4" Padding="14" Margin="0,0,0,16">
-                            <StackPanel>
-                                <Label Content="Platform" Padding="0,0,0,4"/>
-                                <ComboBox ItemsSource="{Binding NewProject.PlatformOptions}"
-                                          SelectedItem="{Binding NewProject.Platform}"
-                                          Margin="0,0,0,12"/>
-
-                                <Label Content="Primary language / framework  (e.g. C# / WPF, TypeScript / React)" Padding="0,0,0,4"/>
-                                <TextBox Text="{Binding NewProject.Language, UpdateSourceTrigger=PropertyChanged}"
-                                         Margin="0,0,0,12"/>
-
-                                <Label Content="Database / storage  (e.g. SQLite, PostgreSQL, None)" Padding="0,0,0,4"/>
-                                <TextBox Text="{Binding NewProject.Database, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- FEATURES -->
-                        <TextBlock Text="FEATURES" FontFamily="Segoe UI Semibold" FontSize="10"
-                                   Foreground="{DynamicResource TextMuted}" Margin="0,0,0,8"/>
-                        <Border Background="{DynamicResource BgCard}" CornerRadius="4" Padding="14" Margin="0,0,0,16">
-                            <StackPanel>
-                                <Label Content="Core features  (one per line)" Padding="0,0,0,4"/>
-                                <TextBox Text="{Binding NewProject.CoreFeatures, UpdateSourceTrigger=PropertyChanged}"
-                                         AcceptsReturn="True" TextWrapping="Wrap" Height="100"
-                                         VerticalScrollBarVisibility="Auto" Margin="0,0,0,12"/>
-
-                                <Label Content="Explicitly out of scope  (one per line)" Padding="0,0,0,4"/>
-                                <TextBox Text="{Binding NewProject.OutOfScope, UpdateSourceTrigger=PropertyChanged}"
-                                         AcceptsReturn="True" TextWrapping="Wrap" Height="72"
-                                         VerticalScrollBarVisibility="Auto"/>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- CONSTRAINTS -->
-                        <TextBlock Text="CONSTRAINTS" FontFamily="Segoe UI Semibold" FontSize="10"
-                                   Foreground="{DynamicResource TextMuted}" Margin="0,0,0,8"/>
-                        <Border Background="{DynamicResource BgCard}" CornerRadius="4" Padding="14" Margin="0,0,0,16">
-                            <StackPanel>
-                                <Label Content="Non-functional requirements  (performance, security, offline support, etc.)" Padding="0,0,0,4"/>
-                                <TextBox Text="{Binding NewProject.NonFunctionalRequirements, UpdateSourceTrigger=PropertyChanged}"
-                                         AcceptsReturn="True" TextWrapping="Wrap" Height="72"
-                                         VerticalScrollBarVisibility="Auto" Margin="0,0,0,12"/>
-
-                                <Label Content="Estimated timeline  (e.g. 2 weeks, 3 months)" Padding="0,0,0,4"/>
-                                <TextBox Text="{Binding NewProject.Timeline, UpdateSourceTrigger=PropertyChanged}"
-                                         Margin="0,0,0,12"/>
-
-                                <Label Content="Similar apps / reference  (for inspiration or comparison)" Padding="0,0,0,4"/>
-                                <TextBox Text="{Binding NewProject.SimilarApps, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- OUTPUT -->
-                        <TextBlock Text="OUTPUT" FontFamily="Segoe UI Semibold" FontSize="10"
-                                   Foreground="{DynamicResource TextMuted}" Margin="0,0,0,8"/>
-                        <Border Background="{DynamicResource BgCard}" CornerRadius="4" Padding="14" Margin="0,0,0,16">
-                            <StackPanel>
-                                <Label Content="Project directory  (will be created if it doesn't exist)" Padding="0,0,0,4"/>
-                                <Grid Margin="0,0,0,16">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBox Grid.Column="0"
-                                             Text="{Binding NewProject.ProjectPath, UpdateSourceTrigger=PropertyChanged}"
-                                             VerticalAlignment="Center"/>
-                                    <Button Grid.Column="1" Content="..." Margin="6,0,0,0" Padding="10,6"
-                                            Style="{DynamicResource SecondaryButton}"
-                                            Command="{Binding NewProject.BrowseProjectPathCommand}"/>
-                                </Grid>
-
-                                <Button Content="Generate Project Files"
-                                        Command="{Binding NewProject.GenerateProjectCommand}"
-                                        HorizontalAlignment="Left" Padding="16,9" FontSize="13"/>
-
-                                <!-- Status row — shown after first generate attempt -->
-                                <Grid Margin="0,12,0,0"
-                                      Visibility="{Binding NewProject.HasGenerateStatus, Converter={StaticResource BoolToVis}}">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{Binding NewProject.GenerateStatus}"
+                            <!-- Header + Load button -->
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="NEW PROJECT SCOPE" FontFamily="Segoe UI Semibold" FontSize="10"
+                                               Foreground="{DynamicResource TextMuted}" Margin="0,0,0,4"/>
+                                    <TextBlock Text="Fill in the form and generate a CLAUDE.md that gives Claude Code full context from day one. Use the AI assistant on the right if you need help thinking through any section."
                                                FontFamily="Segoe UI" FontSize="12" TextWrapping="Wrap"
-                                               VerticalAlignment="Center">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Foreground" Value="#FFCC4444"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding NewProject.GenerateSuccess}" Value="True">
-                                                        <Setter Property="Foreground" Value="{DynamicResource Green}"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                    <Button Grid.Column="1" Content="Open Folder"
-                                            Style="{DynamicResource SecondaryButton}"
-                                            Command="{Binding NewProject.OpenProjectFolderCommand}"
-                                            Visibility="{Binding NewProject.GenerateSuccess, Converter={StaticResource BoolToVis}}"
-                                            Padding="10,4" Margin="10,0,0,0"/>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
+                                               Foreground="{DynamicResource TextSecondary}"/>
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="Load Existing Project"
+                                        Style="{DynamicResource SecondaryButton}"
+                                        Command="{Binding NewProject.LoadProjectCommand}"
+                                        Padding="12,6" VerticalAlignment="Top" Margin="12,0,0,0"/>
+                            </Grid>
 
-                    </StackPanel>
-                </ScrollViewer>
+                            <!-- IDENTITY -->
+                            <TextBlock Text="IDENTITY" FontFamily="Segoe UI Semibold" FontSize="10"
+                                       Foreground="{DynamicResource TextMuted}" Margin="0,0,0,8"/>
+                            <Border Background="{DynamicResource BgCard}" CornerRadius="4" Padding="14" Margin="0,0,0,16">
+                                <StackPanel>
+                                    <Label Content="Project Name" Padding="0,0,0,4"/>
+                                    <TextBox Text="{Binding NewProject.ProjectName, UpdateSourceTrigger=PropertyChanged}"
+                                             Margin="0,0,0,12"/>
+                                    <Label Content="One-line description" Padding="0,0,0,4"/>
+                                    <TextBox Text="{Binding NewProject.Description, UpdateSourceTrigger=PropertyChanged}"
+                                             Margin="0,0,0,12"/>
+                                    <Label Content="Primary goal — what problem does this solve?" Padding="0,0,0,4"/>
+                                    <TextBox Text="{Binding NewProject.Goal, UpdateSourceTrigger=PropertyChanged}"
+                                             AcceptsReturn="True" TextWrapping="Wrap" Height="72"
+                                             VerticalScrollBarVisibility="Auto"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- AUDIENCE -->
+                            <TextBlock Text="AUDIENCE" FontFamily="Segoe UI Semibold" FontSize="10"
+                                       Foreground="{DynamicResource TextMuted}" Margin="0,0,0,8"/>
+                            <Border Background="{DynamicResource BgCard}" CornerRadius="4" Padding="14" Margin="0,0,0,16">
+                                <StackPanel>
+                                    <Label Content="Who are the target users?" Padding="0,0,0,4"/>
+                                    <TextBox Text="{Binding NewProject.TargetAudience, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- TECHNICAL STACK -->
+                            <TextBlock Text="TECHNICAL STACK" FontFamily="Segoe UI Semibold" FontSize="10"
+                                       Foreground="{DynamicResource TextMuted}" Margin="0,0,0,8"/>
+                            <Border Background="{DynamicResource BgCard}" CornerRadius="4" Padding="14" Margin="0,0,0,16">
+                                <StackPanel>
+                                    <Label Content="Platform" Padding="0,0,0,4"/>
+                                    <ComboBox ItemsSource="{Binding NewProject.PlatformOptions}"
+                                              SelectedItem="{Binding NewProject.Platform}"
+                                              Margin="0,0,0,12"/>
+                                    <Label Content="Primary language / framework  (e.g. C# / WPF, TypeScript / React)" Padding="0,0,0,4"/>
+                                    <TextBox Text="{Binding NewProject.Language, UpdateSourceTrigger=PropertyChanged}"
+                                             Margin="0,0,0,12"/>
+                                    <Label Content="Database / storage  (e.g. SQLite, PostgreSQL, None)" Padding="0,0,0,4"/>
+                                    <TextBox Text="{Binding NewProject.Database, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- FEATURES -->
+                            <TextBlock Text="FEATURES" FontFamily="Segoe UI Semibold" FontSize="10"
+                                       Foreground="{DynamicResource TextMuted}" Margin="0,0,0,8"/>
+                            <Border Background="{DynamicResource BgCard}" CornerRadius="4" Padding="14" Margin="0,0,0,16">
+                                <StackPanel>
+                                    <Label Content="Core features  (one per line)" Padding="0,0,0,4"/>
+                                    <TextBox Text="{Binding NewProject.CoreFeatures, UpdateSourceTrigger=PropertyChanged}"
+                                             AcceptsReturn="True" TextWrapping="Wrap" Height="100"
+                                             VerticalScrollBarVisibility="Auto" Margin="0,0,0,12"/>
+                                    <Label Content="Explicitly out of scope  (one per line)" Padding="0,0,0,4"/>
+                                    <TextBox Text="{Binding NewProject.OutOfScope, UpdateSourceTrigger=PropertyChanged}"
+                                             AcceptsReturn="True" TextWrapping="Wrap" Height="72"
+                                             VerticalScrollBarVisibility="Auto"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- CONSTRAINTS -->
+                            <TextBlock Text="CONSTRAINTS" FontFamily="Segoe UI Semibold" FontSize="10"
+                                       Foreground="{DynamicResource TextMuted}" Margin="0,0,0,8"/>
+                            <Border Background="{DynamicResource BgCard}" CornerRadius="4" Padding="14" Margin="0,0,0,16">
+                                <StackPanel>
+                                    <Label Content="Non-functional requirements  (performance, security, offline support, etc.)" Padding="0,0,0,4"/>
+                                    <TextBox Text="{Binding NewProject.NonFunctionalRequirements, UpdateSourceTrigger=PropertyChanged}"
+                                             AcceptsReturn="True" TextWrapping="Wrap" Height="72"
+                                             VerticalScrollBarVisibility="Auto" Margin="0,0,0,12"/>
+                                    <Label Content="Estimated timeline  (e.g. 2 weeks, 3 months)" Padding="0,0,0,4"/>
+                                    <TextBox Text="{Binding NewProject.Timeline, UpdateSourceTrigger=PropertyChanged}"
+                                             Margin="0,0,0,12"/>
+                                    <Label Content="Similar apps / reference  (for inspiration or comparison)" Padding="0,0,0,4"/>
+                                    <TextBox Text="{Binding NewProject.SimilarApps, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- OUTPUT -->
+                            <TextBlock Text="OUTPUT" FontFamily="Segoe UI Semibold" FontSize="10"
+                                       Foreground="{DynamicResource TextMuted}" Margin="0,0,0,8"/>
+                            <Border Background="{DynamicResource BgCard}" CornerRadius="4" Padding="14" Margin="0,0,0,16">
+                                <StackPanel>
+                                    <Label Content="Project directory  (will be created if it doesn't exist)" Padding="0,0,0,4"/>
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Grid.Column="0"
+                                                 Text="{Binding NewProject.ProjectPath, UpdateSourceTrigger=PropertyChanged}"
+                                                 VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1" Content="..." Margin="6,0,0,0" Padding="10,6"
+                                                Style="{DynamicResource SecondaryButton}"
+                                                Command="{Binding NewProject.BrowseProjectPathCommand}"/>
+                                    </Grid>
+                                    <Button Content="Generate Project Files"
+                                            Command="{Binding NewProject.GenerateProjectCommand}"
+                                            HorizontalAlignment="Left" Padding="16,9" FontSize="13"/>
+                                    <Grid Margin="0,12,0,0"
+                                          Visibility="{Binding NewProject.HasGenerateStatus, Converter={StaticResource BoolToVis}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding NewProject.GenerateStatus}"
+                                                   FontFamily="Segoe UI" FontSize="12" TextWrapping="Wrap"
+                                                   VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#FFCC4444"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding NewProject.GenerateSuccess}" Value="True">
+                                                            <Setter Property="Foreground" Value="{DynamicResource Green}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <Button Grid.Column="1" Content="Open Folder"
+                                                Style="{DynamicResource SecondaryButton}"
+                                                Command="{Binding NewProject.OpenProjectFolderCommand}"
+                                                Visibility="{Binding NewProject.GenerateSuccess, Converter={StaticResource BoolToVis}}"
+                                                Padding="10,4" Margin="10,0,0,0"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- RIGHT: AI assistant chat -->
+                    <Border Grid.Column="1" BorderBrush="{DynamicResource Border}" BorderThickness="1,0,0,0"
+                            Background="{DynamicResource BgPanel}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Chat header -->
+                            <Border Grid.Row="0" Padding="14,12"
+                                    BorderBrush="{DynamicResource Border}" BorderThickness="0,0,0,1">
+                                <StackPanel>
+                                    <TextBlock Text="AI ASSISTANT" FontFamily="Segoe UI Semibold" FontSize="10"
+                                               Foreground="{DynamicResource TextMuted}" Margin="0,0,0,3"/>
+                                    <TextBlock Text="Ask anything — goals, features, tech choices, trade-offs."
+                                               FontFamily="Segoe UI" FontSize="11"
+                                               Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"/>
+                                    <TextBlock Text="Powered by Ollama — configure your model in Settings."
+                                               FontFamily="Segoe UI" FontSize="10"
+                                               Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Messages -->
+                            <ScrollViewer Grid.Row="1" x:Name="ChatScrollViewer"
+                                          VerticalScrollBarVisibility="Auto"
+                                          Padding="10,8">
+                                <ItemsControl ItemsSource="{Binding NewProject.ChatHistory}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,0,0,10" CornerRadius="4" Padding="10,8">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="{DynamicResource BgCard}"/>
+                                                        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Role}" Value="user">
+                                                                <Setter Property="Background" Value="{DynamicResource Accent}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Role}" Value="error">
+                                                                <Setter Property="Background" Value="#33CC4444"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Content}"
+                                                               FontFamily="Segoe UI" FontSize="12"
+                                                               TextWrapping="Wrap" Margin="0,0,0,6">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Role}" Value="user">
+                                                                        <Setter Property="Foreground" Value="{DynamicResource TextOnAccent}"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Role}" Value="error">
+                                                                        <Setter Property="Foreground" Value="#FFCC4444"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                    <!-- Copy button on assistant messages only -->
+                                                    <Button Content="Copy"
+                                                            Command="{Binding DataContext.NewProject.CopyChatMessageCommand,
+                                                                      RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding Content}"
+                                                            HorizontalAlignment="Left"
+                                                            Padding="8,3" FontSize="10">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button" BasedOn="{DynamicResource SecondaryButton}">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Role}" Value="user">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Role}" Value="error">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+
+                            <!-- Chat input -->
+                            <Border Grid.Row="2" Padding="10"
+                                    BorderBrush="{DynamicResource Border}" BorderThickness="0,1,0,0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid Grid.Row="0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Grid.Column="0"
+                                                 Text="{Binding NewProject.ChatInput, UpdateSourceTrigger=PropertyChanged}"
+                                                 AcceptsReturn="False" TextWrapping="Wrap"
+                                                 MaxHeight="80" VerticalScrollBarVisibility="Auto"
+                                                 FontFamily="Segoe UI" FontSize="12"
+                                                 IsEnabled="{Binding NewProject.IsChatting, Converter={StaticResource InvBoolToVis}}"
+                                                 x:Name="ChatInputBox"/>
+                                        <Button Grid.Column="1" Content="Send"
+                                                Command="{Binding NewProject.SendChatMessageCommand}"
+                                                Padding="12,6" Margin="6,0,0,0" VerticalAlignment="Bottom"
+                                                IsEnabled="{Binding NewProject.IsChatting, Converter={StaticResource InvBoolToVis}}"/>
+                                    </Grid>
+                                    <TextBlock Grid.Row="1" Margin="0,6,0,0"
+                                               Text="Thinking..."
+                                               FontFamily="Segoe UI" FontSize="11"
+                                               Foreground="{DynamicResource Accent}"
+                                               Visibility="{Binding NewProject.IsChatting, Converter={StaticResource BoolToVis}}"/>
+                                </Grid>
+                            </Border>
+
+                        </Grid>
+                    </Border>
+
+                </Grid>
             </TabItem>
 
             <!-- ABOUT TAB -->
