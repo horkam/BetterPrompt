@@ -77,13 +77,14 @@ public partial class RuleBasedOptimizer
         if (context.FileSignatures.Count == 0 && string.IsNullOrWhiteSpace(context.FileTree))
             return prompt;
 
-        var keywords = expandedKeywords is { Count: > 0 }
-            ? expandedKeywords
+        // Use base keywords only for file search — expanded synonyms cause too many false positives
+        // (e.g. "client" → "customer" matches unrelated method names in Controllers)
+        var searchKeywords = baseKeywords is { Count: > 0 }
+            ? baseKeywords
             : SimilarityMatcher.Tokenize(prompt);
-        if (keywords.Count == 0) return prompt;
+        if (searchKeywords.Count == 0) return prompt;
 
-        var baseKws = baseKeywords is { Count: > 0 } ? baseKeywords : SimilarityMatcher.Tokenize(prompt);
-        var matches = Searcher.Search(keywords, context, maxResults: 6, baseKeywords: baseKws);
+        var matches = Searcher.Search(searchKeywords, context, maxResults: 6);
         if (matches.Count == 0) return prompt;
 
         // Deduplicate by file path — keep the highest-scored match per file

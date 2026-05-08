@@ -16,7 +16,7 @@ public static class SimilarityMatcher
     public static List<string> Tokenize(string text)
     {
         return text.ToLowerInvariant()
-            .Split([' ', '\t', '\n', '\r', '.', ',', '?', '!', ':', ';', '"', '\'', '(', ')', '[', ']', '{', '}'], StringSplitOptions.RemoveEmptyEntries)
+            .Split([' ', '\t', '\n', '\r', '.', ',', '?', '!', ':', ';', '"', '\'', '(', ')', '[', ']', '{', '}', '`', '_', '-', '/'], StringSplitOptions.RemoveEmptyEntries)
             .Where(t => t.Length > 2 && !StopWords.Contains(t))
             .Distinct()
             .ToList();

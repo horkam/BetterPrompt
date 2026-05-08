@@ -758,6 +758,7 @@
                                 <Border Grid.Column="1" Margin="8,0,0,0" Padding="6,2"
                                         CornerRadius="3"
                                         Visibility="{Binding HasOptimizedPrompt, Converter={StaticResource BoolToVis}}">
+
                                     <Border.Style>
                                         <Style TargetType="Border">
                                             <Setter Property="Background" Value="{DynamicResource BgCard}"/>
@@ -782,6 +783,12 @@
                                         </TextBlock.Style>
                                     </TextBlock>
                                 </Border>
+                                <!-- Remove cache entry button — only shown on cache hits -->
+                                <Button Grid.Column="2" Content="Remove Entry"
+                                        Style="{DynamicResource SecondaryButton}"
+                                        Command="{Binding RemoveCachedEntryCommand}"
+                                        Visibility="{Binding FromCache, Converter={StaticResource BoolToVis}}"
+                                        HorizontalAlignment="Left" Margin="8,0,0,0" Padding="8,2" FontSize="10"/>
                             </Grid>
                             <TextBox Grid.Row="1"
                                      Text="{Binding OptimizedPrompt, UpdateSourceTrigger=PropertyChanged}"
@@ -831,6 +838,98 @@
                             </StackPanel>
                         </Grid>
                     </Grid>
+                </Grid>
+            </TabItem>
+
+            <!-- LEARNING CACHE TAB -->
+            <TabItem Header="Learning Cache">
+                <Grid Margin="16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header -->
+                    <StackPanel Grid.Row="0" Margin="0,0,0,12">
+                        <TextBlock Text="LEARNING CACHE" FontFamily="Segoe UI Semibold" FontSize="10"
+                                   Foreground="{DynamicResource TextMuted}" Margin="0,0,0,4"/>
+                        <TextBlock FontFamily="Segoe UI" FontSize="12" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextSecondary}">
+                            <Run Text="Stored optimizations for the current codebase. Entries are reused when a new prompt is "/>
+                            <Run Text="{Binding Settings.SimilarityThreshold, StringFormat={}{0:P0}}"/>
+                            <Run Text=" or more similar to the original."/>
+                        </TextBlock>
+                    </StackPanel>
+
+                    <!-- Toolbar -->
+                    <Grid Grid.Row="1" Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Foreground="{DynamicResource Accent}" FontFamily="Segoe UI Semibold" FontSize="13"
+                                       Text="{Binding LearningEntryCount}" VerticalAlignment="Center"/>
+                            <TextBlock Foreground="{DynamicResource TextMuted}" FontSize="12"
+                                       Text=" entries" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="Clear All"
+                                Style="{DynamicResource SecondaryButton}"
+                                Command="{Binding ClearAllCacheCommand}"
+                                IsEnabled="{Binding LearningEntryCount}"
+                                Padding="12,6"/>
+                    </Grid>
+
+                    <!-- Entry list -->
+                    <Border Grid.Row="2" BorderBrush="{DynamicResource Border}" BorderThickness="1" CornerRadius="4">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding CacheEntries}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border BorderBrush="{DynamicResource Border}" BorderThickness="0,0,0,1"
+                                                Padding="12,10">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                                                    <TextBlock Text="{Binding OriginalPrompt}"
+                                                               FontFamily="Segoe UI" FontSize="12"
+                                                               Foreground="{DynamicResource TextPrimary}"
+                                                               TextWrapping="Wrap" MaxHeight="40"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                        <TextBlock Text="{Binding Source}"
+                                                                   FontFamily="Segoe UI" FontSize="10"
+                                                                   Foreground="{DynamicResource Accent}"
+                                                                   Margin="0,0,10,0"/>
+                                                        <TextBlock Text="{Binding CreatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"
+                                                                   FontFamily="Segoe UI" FontSize="10"
+                                                                   Foreground="{DynamicResource TextMuted}"/>
+                                                        <TextBlock Text=" · "
+                                                                   FontFamily="Segoe UI" FontSize="10"
+                                                                   Foreground="{DynamicResource TextMuted}"/>
+                                                        <TextBlock Text="{Binding Machine}"
+                                                                   FontFamily="Segoe UI" FontSize="10"
+                                                                   Foreground="{DynamicResource TextMuted}"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <Button Grid.Column="1" Content="Delete"
+                                                        Style="{DynamicResource SecondaryButton}"
+                                                        Command="{Binding DataContext.DeleteCacheEntryCommand,
+                                                                  RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding Id}"
+                                                        VerticalAlignment="Center" Padding="8,4" FontSize="11"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+
                 </Grid>
             </TabItem>
 
@@ -1176,7 +1275,7 @@
                         <!-- Credits -->
                         <TextBlock FontFamily="Segoe UI" FontSize="11" TextWrapping="Wrap"
                                    Foreground="{DynamicResource TextMuted}"
-                                   Text="Published by Dan Clark · MIT License"/>
+                                   Text="Published by Dan Clark · AGPL v3 License"/>
 
                     </StackPanel>
                 </ScrollViewer>
