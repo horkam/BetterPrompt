@@ -12,7 +12,7 @@ namespace BetterPrompt.ViewModels;
 
 public partial class NewProjectViewModel : ObservableObject
 {
-    private readonly OllamaOptimizer _ollama;
+    private readonly Func<IAiChatService> _getChatService;
 
     // Form fields
     [ObservableProperty] private string _projectName = string.Empty;
@@ -57,9 +57,9 @@ public partial class NewProjectViewModel : ObservableObject
         "Ask a clarifying question when it would help them think more clearly. " +
         "Do not generate code.";
 
-    public NewProjectViewModel(AppSettings settings, OllamaOptimizer ollama)
+    public NewProjectViewModel(AppSettings settings, Func<IAiChatService> getChatService)
     {
-        _ollama = ollama;
+        _getChatService = getChatService;
     }
 
     // ── Browse / load / generate ──────────────────────────────────────────────
@@ -190,7 +190,7 @@ public partial class NewProjectViewModel : ObservableObject
         {
             var history = ChatHistory.Where(m => m.Role != "error")
                                      .Select(m => (m.Role, m.Content));
-            var (result, error) = await _ollama.ChatAsync(ScopingSystemPrompt, history);
+            var (result, error) = await _getChatService().ChatAsync(ScopingSystemPrompt, history);
             ChatHistory.Add(error is not null
                 ? new ProjectChatMessage("error", error)
                 : new ProjectChatMessage("assistant", result!));

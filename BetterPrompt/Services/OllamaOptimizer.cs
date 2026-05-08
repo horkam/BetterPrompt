@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace BetterPrompt.Services;
 
-public class OllamaOptimizer
+public class OllamaOptimizer : IAiChatService
 {
     // Generous timeout — first inference call loads the model into VRAM which can take 20-30s
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(180) };

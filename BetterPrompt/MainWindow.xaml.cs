@@ -8,6 +8,9 @@ namespace BetterPrompt;
 public partial class MainWindow : Window
 {
     public List<OllamaModelOption> SuggestedModels => MainViewModel.SuggestedModels;
+    public List<string> ClaudeModels => MainViewModel.ClaudeModels;
+    public List<string> OpenAiModels => MainViewModel.OpenAiModels;
+    public List<string> GeminiModels => MainViewModel.GeminiModels;
 
     public MainWindow()
     {
