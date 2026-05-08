@@ -20,6 +20,10 @@ public partial class MainWindow : Window
         var current = SuggestedModels.FirstOrDefault(m => m.ModelId == vm.Settings.OllamaModel)
                       ?? SuggestedModels[0];
         ModelComboBox.SelectedItem = current;
+
+        vm.NewProject.ChatHistory.CollectionChanged += (_, _) =>
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded,
+                () => ChatScrollViewer.ScrollToEnd());
     }
 
     private void ModelComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)

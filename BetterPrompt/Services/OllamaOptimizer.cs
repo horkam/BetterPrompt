@@ -107,4 +107,38 @@ public class OllamaOptimizer
             return (null, $"Ollama error: {ex.Message}");
         }
     }
+
+    public async Task<(string? result, string? error)> ChatAsync(
+        string systemPrompt,
+        IEnumerable<(string role, string content)> history)
+    {
+        var messages = new List<object> { new { role = "system", content = systemPrompt } };
+        foreach (var (role, content) in history)
+            messages.Add(new { role, content });
+
+        var json = JsonSerializer.Serialize(new { model = _settings.OllamaModel, messages, stream = false });
+        var httpContent = new StringContent(json, Encoding.UTF8, "application/json");
+
+        try
+        {
+            var response = await Http.PostAsync($"{_settings.OllamaUrl}/api/chat", httpContent);
+            if (!response.IsSuccessStatusCode)
+            {
+                var body = await response.Content.ReadAsStringAsync();
+                return (null, $"Ollama returned {(int)response.StatusCode}: {body[..Math.Min(body.Length, 200)]}");
+            }
+            var responseJson = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(responseJson);
+            var result = doc.RootElement.GetProperty("message").GetProperty("content").GetString()?.Trim();
+            return string.IsNullOrWhiteSpace(result) ? (null, "Ollama returned empty content") : (result, null);
+        }
+        catch (TaskCanceledException)
+        {
+            return (null, "Timed out — model may still be loading, try again in a moment");
+        }
+        catch (Exception ex)
+        {
+            return (null, $"Ollama error: {ex.Message}");
+        }
+    }
 }

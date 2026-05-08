@@ -54,7 +54,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _updateStatusMessage = string.Empty;
 
     public string CurrentVersion => _updateService.CurrentVersion;
-    public NewProjectViewModel NewProject { get; } = new();
+    public NewProjectViewModel NewProject { get; private set; } = null!;
 
     public bool IsThemeDark   { get => CurrentTheme == AppTheme.Dark;   set { if (value) CurrentTheme = AppTheme.Dark; } }
     public bool IsThemeLight  { get => CurrentTheme == AppTheme.Light;  set { if (value) CurrentTheme = AppTheme.Light; } }
@@ -82,6 +82,7 @@ public partial class MainViewModel : ObservableObject
         _learningStore = new LearningStore();
         _ollamaOptimizer = new OllamaOptimizer(Settings);
         _updateService = new UpdateService();
+        NewProject = new NewProjectViewModel(Settings, _ollamaOptimizer);
         UpdatePullCommand(Settings.OllamaModel);
         // Set backing field directly — theme was already applied by App.OnStartup
         _currentTheme = Settings.Theme;
