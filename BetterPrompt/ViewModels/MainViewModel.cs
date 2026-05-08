@@ -87,6 +87,15 @@ public partial class MainViewModel : ObservableObject
 
         _ = CheckOllamaAsync();
         _ = CheckForUpdatesAsync();
+        _ = AutoIndexLastAsync();
+    }
+
+    private async Task AutoIndexLastAsync()
+    {
+        var last = Settings.LastCodebasePath;
+        if (string.IsNullOrWhiteSpace(last) || !Directory.Exists(last)) return;
+        CodebasePath = last;
+        await IndexCodebaseAsync();
     }
 
     partial void OnHasCodebaseChanged(bool value) => OnPropertyChanged(nameof(CanOptimize));
@@ -140,6 +149,8 @@ public partial class MainViewModel : ObservableObject
 
             StatusMessage = $"Indexed {_context.IndexedFiles} code files ({_context.TotalFiles} total). {LearningEntryCount} learning entries loaded.";
             HasCodebase = true;
+            Settings.LastCodebasePath = CodebasePath;
+            _settingsService.Save(Settings);
         }
         catch (Exception ex)
         {
