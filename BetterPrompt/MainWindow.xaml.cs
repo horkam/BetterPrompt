@@ -1,6 +1,7 @@
 ﻿using BetterPrompt.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace BetterPrompt;
 
@@ -24,6 +25,16 @@ public partial class MainWindow : Window
         vm.NewProject.ChatHistory.CollectionChanged += (_, _) =>
             Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded,
                 () => ChatScrollViewer.ScrollToEnd());
+    }
+
+    private void ChatInputBox_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter && (Keyboard.Modifiers & ModifierKeys.Shift) == 0)
+        {
+            if (DataContext is MainViewModel vm)
+                vm.NewProject.SendChatMessageCommand.Execute(null);
+            e.Handled = true;
+        }
     }
 
     private void ModelComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
