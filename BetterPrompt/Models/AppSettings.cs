@@ -19,4 +19,5 @@ public class AppSettings
         ".cs", ".ts", ".tsx", ".js", ".jsx", ".py", ".go",
         ".java", ".cpp", ".h", ".rs", ".swift", ".kt"
     ];
+    public string LastCodebasePath { get; set; } = string.Empty;
 }
