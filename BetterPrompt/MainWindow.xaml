@@ -760,25 +760,13 @@
                                                     </TextBlock>
                                                     <!-- Copy button on assistant messages only -->
                                                     <Button Content="Copy"
+                                                            Style="{DynamicResource SecondaryButton}"
                                                             Command="{Binding DataContext.NewProject.CopyChatMessageCommand,
                                                                       RelativeSource={RelativeSource AncestorType=Window}}"
                                                             CommandParameter="{Binding Content}"
+                                                            Visibility="{Binding IsAssistant, Converter={StaticResource BoolToVis}}"
                                                             HorizontalAlignment="Left"
-                                                            Padding="8,3" FontSize="10">
-                                                        <Button.Style>
-                                                            <Style TargetType="Button" BasedOn="{DynamicResource SecondaryButton}">
-                                                                <Setter Property="Visibility" Value="Visible"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Role}" Value="user">
-                                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding Role}" Value="error">
-                                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Button.Style>
-                                                    </Button>
+                                                            Padding="8,3" FontSize="10"/>
                                                 </StackPanel>
                                             </Border>
                                         </DataTemplate>
