@@ -54,6 +54,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _updateStatusMessage = string.Empty;
 
     public string CurrentVersion => _updateService.CurrentVersion;
+    public NewProjectViewModel NewProject { get; } = new();
 
     public bool IsThemeDark   { get => CurrentTheme == AppTheme.Dark;   set { if (value) CurrentTheme = AppTheme.Dark; } }
     public bool IsThemeLight  { get => CurrentTheme == AppTheme.Light;  set { if (value) CurrentTheme = AppTheme.Light; } }
