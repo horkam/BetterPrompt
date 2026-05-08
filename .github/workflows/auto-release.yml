@@ -1,9 +1,11 @@
 name: Auto Release
 
 # Runs on every push to main — derives the next version from the latest git tag
-# (falls back to version.txt if no tags exist), builds the installer, pushes
-# only a tag (no commit to main), and creates a GitHub Release.
-# Tags are not subject to the branch protection PR requirement.
+# (falls back to version.txt if no tags exist), then bumps the appropriate
+# component based on the merged branch prefix:
+#   feature/*  → minor bump, patch resets to 0  (e.g. 1.5.2 → 1.6.0)
+#   breaking/* → major bump, minor+patch reset  (e.g. 1.6.0 → 2.0.0)
+#   fix/* or anything else → patch bump only    (e.g. 1.6.0 → 1.6.1)
 
 on:
   push:
@@ -29,17 +31,25 @@ jobs:
         id: version
         shell: pwsh
         run: |
-          # Find the latest vX.Y.Z tag; fall back to version.txt if none exist
+          # Base version from latest tag, falling back to version.txt
           $latest = git tag --list 'v*.*.*' --sort=-version:refname | Select-Object -First 1
-          if ($latest) {
-            $base = $latest.TrimStart('v')
+          $base = if ($latest) { $latest.TrimStart('v') } else { (Get-Content version.txt -Raw).Trim() }
+
+          $major, $minor, $patch = $base.Split('.') | ForEach-Object { [int]$_ }
+
+          # Determine bump type from the merge commit message
+          $commitMsg = git log -1 --pretty=%B
+          if ($commitMsg -match 'breaking/') {
+            $major += 1; $minor = 0; $patch = 0
+          } elseif ($commitMsg -match 'feature/') {
+            $minor += 1; $patch = 0
           } else {
-            $base = (Get-Content version.txt -Raw).Trim()
+            $patch += 1
           }
-          $parts = $base.Split('.')
-          $parts[2] = [int]$parts[2] + 1
-          $new = $parts -join '.'
+
+          $new = "$major.$minor.$patch"
           "VERSION=$new" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "BUMP_TYPE=$(if ($commitMsg -match 'breaking/') { 'major' } elseif ($commitMsg -match 'feature/') { 'minor' } else { 'patch' })" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v4

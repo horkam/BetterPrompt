@@ -125,9 +125,17 @@ Or open `BetterPrompt.slnx` in Visual Studio 2022+ and press F5.
 
 ### Releasing a new version
 
-Every push to `main` triggers an automatic release. The workflow bumps the patch version in `version.txt`, builds a self-contained installer, and publishes it to the [Releases](https://github.com/horkam/BetterPrompt/releases) page within a few minutes. The version badge above updates automatically once the release is live.
+Every merge to `main` triggers an automatic release. The version component that bumps depends on the branch prefix:
 
-To cut a specific version manually (e.g. a minor or major bump), update `version.txt` yourself before merging, or use the **Manual Release** workflow from the Actions tab.
+| Branch prefix | Example | Version bump |
+|---|---|---|
+| `feature/*` | `feature/new-export` | Minor — `1.5.2 → 1.6.0` |
+| `fix/*` | `fix/crash-on-load` | Patch — `1.6.0 → 1.6.1` |
+| `breaking/*` | `breaking/settings-rewrite` | Major — `1.6.1 → 2.0.0` |
+
+The workflow builds a self-contained installer and publishes it to the [Releases](https://github.com/horkam/BetterPrompt/releases) page within a few minutes. The version badges above update automatically once the release is live.
+
+To cut a specific version manually, use the **Manual Release** workflow from the Actions tab.
 
 ---
 
