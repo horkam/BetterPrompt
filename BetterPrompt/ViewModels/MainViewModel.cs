@@ -40,6 +40,8 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool _hasOptimizedPrompt;
     [ObservableProperty] private bool _hasCodebase;
     [ObservableProperty] private bool _fromCache;
+    [ObservableProperty] private string _currentCachedEntryId = string.Empty;
+    [ObservableProperty] private ObservableCollection<LearningEntry> _cacheEntries = [];
 
     public bool CanOptimize => HasCodebase && !IsOptimizing;
     [ObservableProperty] private int _learningEntryCount;
@@ -204,6 +206,7 @@ public partial class MainViewModel : ObservableObject
         {
             _learningStore.Load(value);
             LearningEntryCount = _learningStore.EntryCount;
+            RefreshCacheEntries();
         }
     }
 
@@ -224,6 +227,18 @@ public partial class MainViewModel : ObservableObject
         _learningStore.Load(CodebasePath);
         LearningEntryCount = _learningStore.EntryCount;
 
+        if (_learningStore.EntryCount > 0)
+        {
+            var answer = MessageBox.Show(
+                $"This codebase has {_learningStore.EntryCount} cached learning entries.\n\nClearing the cache is recommended after re-indexing so stale results don't appear.\n\nClear the cache now?",
+                "Learning Cache", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (answer == MessageBoxResult.Yes)
+            {
+                _learningStore.Clear();
+                LearningEntryCount = 0;
+            }
+        }
+
         _optimizer = new PromptOptimizerService(Settings, _learningStore);
 
         var progress = new Progress<string>(msg => StatusMessage = msg);
@@ -235,6 +250,7 @@ public partial class MainViewModel : ObservableObject
                 FileTree.Add(line);
 
             StatusMessage = $"Indexed {_context.IndexedFiles} code files ({_context.TotalFiles} total). {LearningEntryCount} learning entries loaded.";
+            RefreshCacheEntries();
             HasCodebase = true;
             Settings.LastCodebasePath = CodebasePath;
             _settingsService.Save(Settings);
@@ -283,6 +299,7 @@ public partial class MainViewModel : ObservableObject
                 Explanation = result.Explanation;
                 SourceLabel = result.SourceLabel;
                 FromCache = result.Source == OptimizationSource.Cache;
+                CurrentCachedEntryId = result.CachedEntryId ?? string.Empty;
 
                 foreach (var c in result.Changes)
                     Changes.Add(c);
@@ -297,6 +314,7 @@ public partial class MainViewModel : ObservableObject
                 StatCharsRemoved    = Math.Max(0, RawPrompt.Length - result.OptimizedPrompt.Length);
 
                 LearningEntryCount = _learningStore.EntryCount;
+                RefreshCacheEntries();
                 HasOptimizedPrompt = true;
                 StatusMessage = $"Done. Source: {result.SourceLabel}. {LearningEntryCount} entries in learning store.";
             }
@@ -447,6 +465,50 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void OpenGitHub()
         => Process.Start(new ProcessStartInfo(UpdateService.GitHubUrl) { UseShellExecute = true });
+
+    [RelayCommand]
+    private void RemoveCachedEntry()
+    {
+        if (string.IsNullOrEmpty(CurrentCachedEntryId)) return;
+        _learningStore.Delete(CurrentCachedEntryId);
+        CurrentCachedEntryId = string.Empty;
+        FromCache = false;
+        LearningEntryCount = _learningStore.EntryCount;
+        RefreshCacheEntries();
+        StatusMessage = "Cache entry removed.";
+    }
+
+    [RelayCommand]
+    private void DeleteCacheEntry(string id)
+    {
+        _learningStore.Delete(id);
+        LearningEntryCount = _learningStore.EntryCount;
+        RefreshCacheEntries();
+        if (CurrentCachedEntryId == id)
+            CurrentCachedEntryId = string.Empty;
+    }
+
+    [RelayCommand]
+    private void ClearAllCache()
+    {
+        if (_learningStore.EntryCount == 0) return;
+        var answer = MessageBox.Show(
+            $"Delete all {_learningStore.EntryCount} learning entries for this codebase?\n\nThis cannot be undone.",
+            "Clear Cache", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (answer != MessageBoxResult.Yes) return;
+        _learningStore.Clear();
+        LearningEntryCount = 0;
+        CurrentCachedEntryId = string.Empty;
+        RefreshCacheEntries();
+        StatusMessage = "Learning cache cleared.";
+    }
+
+    private void RefreshCacheEntries()
+    {
+        CacheEntries.Clear();
+        foreach (var entry in _learningStore.Entries.OrderByDescending(e => e.CreatedAt))
+            CacheEntries.Add(entry);
+    }
 }
 
 public record OllamaModelOption(string ModelId, string DisplayName, string Description);

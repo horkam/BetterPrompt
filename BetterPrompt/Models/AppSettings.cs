@@ -19,12 +19,16 @@ public class AppSettings
     public List<string> ExcludedDirectories { get; set; } =
     [
         ".git", ".vs", "bin", "obj", "node_modules", ".next",
-        "dist", "out", "build", "packages", ".nuget"
+        "dist", "out", "build", "packages", ".nuget",
+        "lib", "vendor", "fonts", "webfonts", "aspnet_client",
+        "Ace", "ace", "fontawesome", "locales", "esm", "umd",
+        "Migrations"
     ];
     public List<string> CodeExtensions { get; set; } =
     [
         ".cs", ".ts", ".tsx", ".js", ".jsx", ".py", ".go",
-        ".java", ".cpp", ".h", ".rs", ".swift", ".kt"
+        ".java", ".cpp", ".h", ".rs", ".swift", ".kt",
+        ".cshtml", ".razor", ".sql", ".vb"
     ];
     public string LastCodebasePath { get; set; } = string.Empty;
 }

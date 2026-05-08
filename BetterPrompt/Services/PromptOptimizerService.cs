@@ -38,7 +38,8 @@ public class PromptOptimizerService
                 Explanation = $"Matched a prior optimization ({cacheHit.Value.score:P0} similar).",
                 Changes = cacheHit.Value.entry.RulesFired,
                 Source = OptimizationSource.Cache,
-                CacheMatchScore = cacheHit.Value.score
+                CacheMatchScore = cacheHit.Value.score,
+                CachedEntryId = cacheHit.Value.entry.Id
             };
         }
 
@@ -49,9 +50,9 @@ public class PromptOptimizerService
             ? await _keywordExpander.ExpandAsync(baseKeywords, progress)
             : baseKeywords;
 
-        // Step 3: Rule-based pass (uses expanded keywords for reference injection)
+        // Step 3: Rule-based pass (uses expanded keywords for reference injection, base keywords for scoring)
         progress?.Report("Running rule-based optimizer...");
-        var (ruledPrompt, rulesFired) = _ruleOptimizer.Optimize(rawPrompt, context, expandedKeywords);
+        var (ruledPrompt, rulesFired) = _ruleOptimizer.Optimize(rawPrompt, context, expandedKeywords, baseKeywords);
         var source = OptimizationSource.Rules;
         var finalPrompt = ruledPrompt;
 

@@ -19,7 +19,7 @@ public partial class RuleBasedOptimizer
         (MetaSearchFor(), ""),
     ];
 
-    public (string prompt, List<string> rulesFired) Optimize(string rawPrompt, CodebaseContext? context, List<string>? expandedKeywords = null)
+    public (string prompt, List<string> rulesFired) Optimize(string rawPrompt, CodebaseContext? context, List<string>? expandedKeywords = null, List<string>? baseKeywords = null)
     {
         var prompt = rawPrompt.Trim();
         var rulesFired = new List<string>();
@@ -44,7 +44,7 @@ public partial class RuleBasedOptimizer
         // Pass 4: inject codebase references — runs AFTER whitespace cleanup so injected
         // newlines are not destroyed
         if (context is not null)
-            prompt = InjectCodebaseReferences(prompt, context, rulesFired, expandedKeywords);
+            prompt = InjectCodebaseReferences(prompt, context, rulesFired, expandedKeywords, baseKeywords);
 
         return (prompt, rulesFired);
     }
@@ -72,17 +72,19 @@ public partial class RuleBasedOptimizer
 
     private static readonly CodebaseSearcher Searcher = new();
 
-    private static string InjectCodebaseReferences(string prompt, CodebaseContext context, List<string> rulesFired, List<string>? expandedKeywords)
+    private static string InjectCodebaseReferences(string prompt, CodebaseContext context, List<string> rulesFired, List<string>? expandedKeywords, List<string>? baseKeywords)
     {
         if (context.FileSignatures.Count == 0 && string.IsNullOrWhiteSpace(context.FileTree))
             return prompt;
 
-        var keywords = expandedKeywords is { Count: > 0 }
-            ? expandedKeywords
+        // Use base keywords only for file search — expanded synonyms cause too many false positives
+        // (e.g. "client" → "customer" matches unrelated method names in Controllers)
+        var searchKeywords = baseKeywords is { Count: > 0 }
+            ? baseKeywords
             : SimilarityMatcher.Tokenize(prompt);
-        if (keywords.Count == 0) return prompt;
+        if (searchKeywords.Count == 0) return prompt;
 
-        var matches = Searcher.Search(keywords, context, maxResults: 6);
+        var matches = Searcher.Search(searchKeywords, context, maxResults: 6);
         if (matches.Count == 0) return prompt;
 
         // Deduplicate by file path — keep the highest-scored match per file

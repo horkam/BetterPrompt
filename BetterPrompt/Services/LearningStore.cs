@@ -17,6 +17,7 @@ public class LearningStore
     private List<LearningEntry> _entries = [];
 
     public int EntryCount => _entries.Count;
+    public IReadOnlyList<LearningEntry> Entries => _entries.AsReadOnly();
 
     public void Load(string codebaseRoot)
     {
@@ -76,6 +77,22 @@ public class LearningStore
 
         entry.Keywords = SimilarityMatcher.Tokenize(entry.OriginalPrompt);
         _entries.Add(entry);
+        Flush();
+    }
+
+    public void Delete(string id)
+    {
+        var entry = _entries.FirstOrDefault(e => e.Id == id);
+        if (entry is not null)
+        {
+            _entries.Remove(entry);
+            Flush();
+        }
+    }
+
+    public void Clear()
+    {
+        _entries.Clear();
         Flush();
     }
 

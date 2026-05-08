@@ -8,6 +8,7 @@ public class OptimizationResult
     public List<string> Changes { get; set; } = [];
     public OptimizationSource Source { get; set; } = OptimizationSource.Rules;
     public double? CacheMatchScore { get; set; }
+    public string? CachedEntryId { get; set; }
     public bool Success { get; set; }
     public string? ErrorMessage { get; set; }
 
