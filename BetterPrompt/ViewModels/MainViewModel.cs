@@ -29,6 +29,12 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _statusMessage = "No codebase loaded.";
     [ObservableProperty] private string _ollamaStatus = "Ollama: checking...";
     [ObservableProperty] private bool _ollamaAvailable;
+    [ObservableProperty] private string _claudeStatus = "Claude: not tested";
+    [ObservableProperty] private bool _claudeAvailable;
+    [ObservableProperty] private string _openAiStatus = "OpenAI: not tested";
+    [ObservableProperty] private bool _openAiAvailable;
+    [ObservableProperty] private string _geminiStatus = "Gemini: not tested";
+    [ObservableProperty] private bool _geminiAvailable;
     [ObservableProperty] private bool _isIndexing;
     [ObservableProperty] private bool _isOptimizing;
     [ObservableProperty] private bool _hasOptimizedPrompt;
@@ -60,6 +66,85 @@ public partial class MainViewModel : ObservableObject
     public bool IsThemeLight  { get => CurrentTheme == AppTheme.Light;  set { if (value) CurrentTheme = AppTheme.Light; } }
     public bool IsThemeSystem { get => CurrentTheme == AppTheme.System; set { if (value) CurrentTheme = AppTheme.System; } }
 
+    public static readonly List<string> ClaudeModels =
+    [
+        "claude-sonnet-4-6",
+        "claude-opus-4-7",
+        "claude-haiku-4-5",
+    ];
+
+    public static readonly List<string> OpenAiModels =
+    [
+        "gpt-4o",
+        "gpt-4o-mini",
+    ];
+
+    public static readonly List<string> GeminiModels =
+    [
+        "gemini-2.0-flash",
+        "gemini-1.5-pro",
+    ];
+
+    public bool ProviderIsOllama
+    {
+        get => Settings.ChatProvider == AiProvider.Ollama;
+        set { if (value) { Settings.ChatProvider = AiProvider.Ollama; NotifyProviderChanged(); } }
+    }
+    public bool ProviderIsClaude
+    {
+        get => Settings.ChatProvider == AiProvider.Claude;
+        set { if (value) { Settings.ChatProvider = AiProvider.Claude; NotifyProviderChanged(); } }
+    }
+    public bool ProviderIsOpenAI
+    {
+        get => Settings.ChatProvider == AiProvider.OpenAI;
+        set { if (value) { Settings.ChatProvider = AiProvider.OpenAI; NotifyProviderChanged(); } }
+    }
+    public bool ProviderIsGemini
+    {
+        get => Settings.ChatProvider == AiProvider.Gemini;
+        set { if (value) { Settings.ChatProvider = AiProvider.Gemini; NotifyProviderChanged(); } }
+    }
+
+    public string ActiveProviderLabel => Settings.ChatProvider switch
+    {
+        AiProvider.Claude  => "Claude",
+        AiProvider.OpenAI  => "OpenAI",
+        AiProvider.Gemini  => "Gemini",
+        _                  => "Ollama"
+    };
+
+    public bool ActiveProviderAvailable => Settings.ChatProvider switch
+    {
+        AiProvider.Claude  => ClaudeAvailable,
+        AiProvider.OpenAI  => OpenAiAvailable,
+        AiProvider.Gemini  => GeminiAvailable,
+        _                  => OllamaAvailable
+    };
+
+    private void NotifyProviderChanged()
+    {
+        OnPropertyChanged(nameof(ProviderIsOllama));
+        OnPropertyChanged(nameof(ProviderIsClaude));
+        OnPropertyChanged(nameof(ProviderIsOpenAI));
+        OnPropertyChanged(nameof(ProviderIsGemini));
+        OnPropertyChanged(nameof(ActiveProviderLabel));
+        OnPropertyChanged(nameof(ActiveProviderAvailable));
+    }
+
+    partial void OnOllamaAvailableChanged(bool value) => OnPropertyChanged(nameof(ActiveProviderAvailable));
+    partial void OnClaudeAvailableChanged(bool value) => OnPropertyChanged(nameof(ActiveProviderAvailable));
+    partial void OnOpenAiAvailableChanged(bool value) => OnPropertyChanged(nameof(ActiveProviderAvailable));
+    partial void OnGeminiAvailableChanged(bool value) => OnPropertyChanged(nameof(ActiveProviderAvailable));
+
+    private IAiChatService GetCurrentChatService() => Settings.ChatProvider switch
+    {
+        AiProvider.Claude => new ClaudeChatService(Settings),
+        AiProvider.OpenAI => new OpenAiChatService(Settings),
+        AiProvider.Gemini => new GeminiChatService(Settings),
+        _ => _ollamaOptimizer
+    };
+
     public static readonly List<OllamaModelOption> SuggestedModels =
     [
         new("llama3.2:3b",        "Llama 3.2 3B",         "Fast, well-rounded — recommended default"),
@@ -82,7 +167,7 @@ public partial class MainViewModel : ObservableObject
         _learningStore = new LearningStore();
         _ollamaOptimizer = new OllamaOptimizer(Settings);
         _updateService = new UpdateService();
-        NewProject = new NewProjectViewModel(Settings, _ollamaOptimizer);
+        NewProject = new NewProjectViewModel(Settings, GetCurrentChatService);
         UpdatePullCommand(Settings.OllamaModel);
         // Set backing field directly — theme was already applied by App.OnStartup
         _currentTheme = Settings.Theme;
@@ -255,6 +340,7 @@ public partial class MainViewModel : ObservableObject
     {
         _settingsService.Save(Settings);
         _ = CheckOllamaAsync();
+        NotifyProviderChanged();
         StatusMessage = "Settings saved.";
     }
 
@@ -267,6 +353,33 @@ public partial class MainViewModel : ObservableObject
         };
         if (dialog.ShowDialog() == true)
             CodebasePath = dialog.FolderName;
+    }
+
+    [RelayCommand]
+    private async Task TestClaudeAsync()
+    {
+        ClaudeStatus = "Claude: checking...";
+        var (success, message) = await new ClaudeChatService(Settings).TestConnectionAsync();
+        ClaudeAvailable = success;
+        ClaudeStatus = message;
+    }
+
+    [RelayCommand]
+    private async Task TestOpenAiAsync()
+    {
+        OpenAiStatus = "OpenAI: checking...";
+        var (success, message) = await new OpenAiChatService(Settings).TestConnectionAsync();
+        OpenAiAvailable = success;
+        OpenAiStatus = message;
+    }
+
+    [RelayCommand]
+    private async Task TestGeminiAsync()
+    {
+        GeminiStatus = "Gemini: checking...";
+        var (success, message) = await new GeminiChatService(Settings).TestConnectionAsync();
+        GeminiAvailable = success;
+        GeminiStatus = message;
     }
 
     [RelayCommand]
