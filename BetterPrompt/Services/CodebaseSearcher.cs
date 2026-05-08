@@ -23,7 +23,7 @@ public class CodebaseSearchResult
 
 public class CodebaseSearcher
 {
-    public List<CodebaseSearchResult> Search(IEnumerable<string> keywords, CodebaseContext context, int maxResults = 6)
+    public List<CodebaseSearchResult> Search(IEnumerable<string> keywords, CodebaseContext context, int maxResults = 6, IEnumerable<string>? baseKeywords = null)
     {
         var terms = keywords
             .Select(k => k.ToLowerInvariant())
@@ -32,38 +32,46 @@ public class CodebaseSearcher
 
         if (terms.Count == 0) return [];
 
+        // Base keywords (original prompt terms before expansion) get 2× score weight
+        var baseTerms = baseKeywords != null
+            ? baseKeywords.Select(k => k.ToLowerInvariant()).Where(k => k.Length > 2).ToHashSet()
+            : terms.ToHashSet();
+
         var results = new List<CodebaseSearchResult>();
 
         // Search file names and directory names in the tree
         foreach (var file in context.FileSignatures)
         {
-            var fileName = Path.GetFileNameWithoutExtension(file.RelativePath).ToLowerInvariant();
-            var dirParts  = file.RelativePath.Replace('\\', '/').Split('/').SkipLast(1);
+            // Keep original case so SplitIdentifier can split PascalCase correctly (e.g. CorePOS → ["Core","POS"])
+            var fileName = Path.GetFileNameWithoutExtension(file.RelativePath);
+            var relativePath = file.RelativePath.Replace('\\', '/');
+            var dirParts  = relativePath.Split('/').SkipLast(1);
 
-            var fileScore = ScoreAgainstTerms(fileName, terms);
+            var fileScore = ScoreAgainstTerms(fileName, terms, baseTerms);
             if (fileScore > 0)
             {
                 results.Add(new CodebaseSearchResult
                 {
-                    FilePath  = file.RelativePath.Replace('\\', '/'),
+                    FilePath  = relativePath,
                     Symbol    = Path.GetFileName(file.RelativePath),
                     MatchKind = "file",
-                    Score     = fileScore
+                    Score     = fileScore * ExtensionMultiplier(file.RelativePath, context.ReferencedScripts)
+                                         * GetDirectoryMultiplier(relativePath, context.ProjectType)
                 });
             }
 
             // Search directory segments too
             foreach (var dir in dirParts)
             {
-                var dirScore = ScoreAgainstTerms(dir.ToLowerInvariant(), terms);
-                if (dirScore > 0.4)
+                var dirScore = ScoreAgainstTerms(dir.ToLowerInvariant(), terms, baseTerms);
+                if (dirScore > 0.15)
                 {
                     results.Add(new CodebaseSearchResult
                     {
-                        FilePath  = file.RelativePath.Replace('\\', '/'),
+                        FilePath  = relativePath,
                         Symbol    = dir,
                         MatchKind = "directory",
-                        Score     = dirScore * 0.7 // slightly lower than direct file match
+                        Score     = dirScore * 0.7
                     });
                 }
             }
@@ -75,14 +83,15 @@ public class CodebaseSearcher
                 if (classMatch.Success)
                 {
                     var name = classMatch.Groups[1].Value;
-                    var score = ScoreAgainstTerms(name.ToLowerInvariant(), terms);
+                    var score = ScoreAgainstTerms(name, terms, baseTerms);
                     if (score > 0)
                         results.Add(new CodebaseSearchResult
                         {
-                            FilePath  = file.RelativePath.Replace('\\', '/'),
+                            FilePath  = relativePath,
                             Symbol    = name,
                             MatchKind = "class",
-                            Score     = score * 1.1 // class names are strong matches
+                            Score     = score * 1.1 * ExtensionMultiplier(file.RelativePath, context.ReferencedScripts)
+                                                    * GetDirectoryMultiplier(relativePath, context.ProjectType)
                         });
                 }
 
@@ -90,33 +99,39 @@ public class CodebaseSearcher
                 if (methodMatch.Success)
                 {
                     var name = methodMatch.Groups[1].Value;
-                    var score = ScoreAgainstTerms(name.ToLowerInvariant(), terms);
+                    var score = ScoreAgainstTerms(name, terms, baseTerms);
                     if (score > 0)
                         results.Add(new CodebaseSearchResult
                         {
-                            FilePath  = file.RelativePath.Replace('\\', '/'),
+                            FilePath  = relativePath,
                             Symbol    = name,
                             MatchKind = "method",
-                            Score     = score
+                            Score     = score * ExtensionMultiplier(file.RelativePath, context.ReferencedScripts)
+                                              * GetDirectoryMultiplier(relativePath, context.ProjectType)
                         });
                 }
             }
         }
 
         // Also scan the raw file tree text for files not in signatures (e.g. non-code files)
+        // Only directory lines (no leading spaces) — file entries are already covered by signatures
         foreach (var treeLine in context.FileTree.Split('\n', StringSplitOptions.RemoveEmptyEntries))
         {
+            var isDirectory = treeLine.StartsWith("  ") == false;
             var trimmed = treeLine.Trim().TrimEnd('/');
             var lower   = trimmed.ToLowerInvariant();
-            var score   = ScoreAgainstTerms(lower, terms);
-            if (score > 0 && !results.Any(r => r.FilePath.EndsWith(trimmed, StringComparison.OrdinalIgnoreCase)))
+            var score   = ScoreAgainstTerms(lower, terms, baseTerms);
+            if (score > 0 && !results.Any(r => Path.GetFileName(r.FilePath).Equals(trimmed, StringComparison.OrdinalIgnoreCase) ||
+                                                   r.FilePath.Equals(trimmed, StringComparison.OrdinalIgnoreCase)))
             {
+                var multiplier = isDirectory ? 0.8 : 0.8 * ExtensionMultiplier(trimmed, context.ReferencedScripts)
+                                                         * GetDirectoryMultiplier(trimmed, context.ProjectType);
                 results.Add(new CodebaseSearchResult
                 {
                     FilePath  = trimmed,
                     Symbol    = trimmed,
-                    MatchKind = "file",
-                    Score     = score * 0.8
+                    MatchKind = isDirectory ? "directory" : "file",
+                    Score     = score * multiplier
                 });
             }
         }
@@ -124,12 +139,97 @@ public class CodebaseSearcher
         return results
             .GroupBy(r => $"{r.FilePath}|{r.Symbol}")   // deduplicate
             .Select(g => g.OrderByDescending(x => x.Score).First())
+            .Where(r => r.Score >= 0.22)                // suppress near-zero matches
             .OrderByDescending(r => r.Score)
             .Take(maxResults)
             .ToList();
     }
 
-    private static double ScoreAgainstTerms(string candidate, List<string> terms)
+    private static double ExtensionMultiplier(string filePath, HashSet<string>? referencedScripts = null)
+    {
+        var ext = Path.GetExtension(filePath).ToLowerInvariant();
+        if (ext is ".js" or ".jsx")
+        {
+            // App JS referenced in views scores like .ts; unreferenced vendor JS is penalized
+            if (referencedScripts != null &&
+                (referencedScripts.Contains(filePath) || referencedScripts.Contains(Path.GetFileName(filePath))))
+                return 1.2;
+            return 0.7;
+        }
+        return ext switch
+        {
+            ".sql"                          => 2.0,
+            ".cs" or ".cshtml" or ".razor"
+                 or ".vb"                   => 1.5,
+            ".ts" or ".tsx"                 => 1.2,
+            _                               => 1.0
+        };
+    }
+
+    private static double GetDirectoryMultiplier(string filePath, ProjectType projectType)
+    {
+        if (projectType == ProjectType.Unknown) return 1.0;
+
+        // Extract directory segments (exclude the filename itself)
+        var parts = filePath.ToLowerInvariant().Replace('\\', '/').Split('/');
+        var dirs  = parts.Length > 1 ? parts[..^1] : [];
+
+        var (tier1, tier2, tier3) = projectType switch
+        {
+            ProjectType.CSharpMvc => (
+                new[] { "controllers", "models", "views", "sql", "data", "services", "repositories", "entities" },
+                new[] { "helpers", "filters", "extensions", "viewmodels", "dtos", "utilities", "infrastructure" },
+                new[] { "scripts", "content", "wwwroot", "assets", "fonts" }
+            ),
+            ProjectType.CSharpApi => (
+                new[] { "controllers", "models", "services", "data", "repositories", "sql", "entities" },
+                new[] { "helpers", "filters", "extensions", "dtos", "validators", "middleware" },
+                new[] { "wwwroot", "scripts", "assets" }
+            ),
+            ProjectType.CSharpGeneric => (
+                new[] { "models", "services", "data", "sql", "core", "domain" },
+                new[] { "helpers", "extensions", "utilities", "infrastructure" },
+                new[] { "scripts", "assets", "resources" }
+            ),
+            ProjectType.React => (
+                new[] { "src", "components", "pages", "hooks", "context", "store", "features" },
+                new[] { "utils", "services", "api", "helpers", "lib" },
+                new[] { "public", "assets", "styles", "static" }
+            ),
+            ProjectType.Angular => (
+                new[] { "src", "app", "components", "services", "modules", "pages" },
+                new[] { "shared", "helpers", "guards", "interceptors", "models" },
+                new[] { "assets", "environments" }
+            ),
+            ProjectType.Vue => (
+                new[] { "src", "components", "views", "store", "pages", "composables" },
+                new[] { "utils", "services", "api", "helpers", "plugins" },
+                new[] { "public", "assets", "static" }
+            ),
+            ProjectType.Django => (
+                new[] { "models", "views", "serializers", "api", "urls" },
+                new[] { "utils", "helpers", "services", "forms", "admin" },
+                new[] { "static", "templates", "migrations" }
+            ),
+            ProjectType.Python => (
+                new[] { "models", "services", "core", "api", "domain" },
+                new[] { "utils", "helpers", "exceptions" },
+                new[] { "static", "templates", "tests" }
+            ),
+            _ => (Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>())
+        };
+
+        foreach (var dir in dirs)
+        {
+            if (Array.IndexOf(tier1, dir) >= 0) return 2.0;
+            if (Array.IndexOf(tier2, dir) >= 0) return 1.3;
+            if (Array.IndexOf(tier3, dir) >= 0) return 0.7;
+        }
+
+        return 1.0;
+    }
+
+    private static double ScoreAgainstTerms(string candidate, List<string> terms, HashSet<string>? baseTerms = null)
     {
         if (string.IsNullOrWhiteSpace(candidate)) return 0;
 
@@ -139,19 +239,22 @@ public class CodebaseSearcher
 
         foreach (var term in terms)
         {
+            // Original prompt terms score 2× vs Ollama-expanded synonyms
+            double weight = baseTerms != null && baseTerms.Contains(term) ? 2.0 : 1.0;
+
             // Exact segment match scores highest
             if (parts.Any(p => p == term))
-                total += 1.0;
+                total += 1.0 * weight;
             // Partial / contains match scores lower
             else if (parts.Any(p => p.Contains(term) || term.Contains(p)))
-                total += 0.5;
+                total += 0.5 * weight;
             // Full string contains
-            else if (candidate.Contains(term))
-                total += 0.3;
+            else if (candidate.Contains(term, StringComparison.OrdinalIgnoreCase))
+                total += 0.3 * weight;
         }
 
-        // Normalize by term count so multi-word queries don't artificially outscore
-        return terms.Count > 0 ? total / terms.Count : 0;
+        // Normalize by sqrt(termCount) so a single strong match isn't buried by query length
+        return terms.Count > 0 ? total / Math.Sqrt(terms.Count) : 0;
     }
 
     private static List<string> SplitIdentifier(string name)

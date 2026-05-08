@@ -1,5 +1,19 @@
 namespace BetterPrompt.Models;
 
+public enum ProjectType
+{
+    Unknown,
+    CSharpMvc,
+    CSharpApi,
+    CSharpGeneric,
+    React,
+    Angular,
+    Vue,
+    Django,
+    Python,
+    Node,
+}
+
 public class CodebaseContext
 {
     public string RootPath { get; set; } = string.Empty;
@@ -8,6 +22,8 @@ public class CodebaseContext
     public List<FileSignature> FileSignatures { get; set; } = [];
     public int TotalFiles { get; set; }
     public int IndexedFiles { get; set; }
+    public HashSet<string> ReferencedScripts { get; set; } = [];
+    public ProjectType ProjectType { get; set; } = ProjectType.Unknown;
 
     public string ToContextBlock()
     {
