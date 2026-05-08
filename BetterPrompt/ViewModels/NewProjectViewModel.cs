@@ -301,4 +301,7 @@ public partial class NewProjectViewModel : ObservableObject
     }
 }
 
-public record ProjectChatMessage(string Role, string Content);
+public record ProjectChatMessage(string Role, string Content)
+{
+    public bool IsAssistant => Role == "assistant";
+}
