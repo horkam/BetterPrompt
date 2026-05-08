@@ -402,3 +402,5 @@ FodyWeavers.xsd
 
 # BetterPrompt build outputs
 installer/Output/
+.claude/settings.json
+/.claude
