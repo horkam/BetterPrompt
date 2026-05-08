@@ -170,17 +170,27 @@ public partial class NewProjectViewModel : ObservableObject
     {
         var input = ChatInput.Trim();
         if (string.IsNullOrWhiteSpace(input) || IsChatting) return;
-
-        ChatHistory.Add(new ProjectChatMessage("user", input));
         ChatInput = string.Empty;
-        IsChatting = true;
+        await SendMessageAsync(input);
+    }
 
+    [RelayCommand]
+    private async Task AskAboutFieldAsync(string field)
+    {
+        var message = BuildFieldPrompt(field);
+        if (!string.IsNullOrWhiteSpace(message))
+            await SendMessageAsync(message);
+    }
+
+    private async Task SendMessageAsync(string message)
+    {
+        ChatHistory.Add(new ProjectChatMessage("user", message));
+        IsChatting = true;
         try
         {
             var history = ChatHistory.Where(m => m.Role != "error")
                                      .Select(m => (m.Role, m.Content));
             var (result, error) = await _ollama.ChatAsync(ScopingSystemPrompt, history);
-
             ChatHistory.Add(error is not null
                 ? new ProjectChatMessage("error", error)
                 : new ProjectChatMessage("assistant", result!));
@@ -194,6 +204,45 @@ public partial class NewProjectViewModel : ObservableObject
             IsChatting = false;
         }
     }
+
+    private string BuildFieldPrompt(string field) => field switch
+    {
+        "ProjectName" => string.IsNullOrWhiteSpace(ProjectName)
+            ? "I'm starting a new software project and need help naming it. What makes a good project name, and how should it relate to the project's purpose?"
+            : $"I'm naming my project \"{ProjectName}\". Does this name clearly communicate what the project does? Any suggestions?",
+        "Description" => string.IsNullOrWhiteSpace(Description)
+            ? "Help me write a clear one-line description for my project. What should it communicate — the problem solved, the audience, or the approach?"
+            : $"Here's my current one-line description: \"{Description}\". Is this clear and compelling? How could I improve it?",
+        "Goal" => string.IsNullOrWhiteSpace(Goal)
+            ? "Help me articulate the primary goal of my project. What problem does it solve, for whom, and why does it matter?"
+            : $"Here's the primary goal I've written: \"{Goal}\". Does this clearly capture the problem being solved? What am I missing?",
+        "TargetAudience" => string.IsNullOrWhiteSpace(TargetAudience)
+            ? "Help me define the target audience for my project. Who are the users, what are their needs, and how does that shape what I should build?"
+            : $"My target audience is: \"{TargetAudience}\". Does this feel well-defined? How might their needs shape my features or design?",
+        "Platform" => $"I'm targeting the \"{Platform}\" platform. What are the key architectural, UX, and deployment considerations I should think through upfront?",
+        "Language" => string.IsNullOrWhiteSpace(Language)
+            ? $"Help me choose a language and framework for a {Platform} project. What are my main options and their trade-offs?"
+            : $"I'm planning to use \"{Language}\" for my {Platform} project. Is this a good fit? Are there trade-offs or alternatives worth considering?",
+        "Database" => string.IsNullOrWhiteSpace(Database)
+            ? $"Help me choose a database or storage solution for a {Platform} project using {Language}. What factors should I consider — data volume, query complexity, offline needs, deployment?"
+            : $"I'm planning to use \"{Database}\" as my storage solution for a {Platform} project. Is this a good fit? Any trade-offs to be aware of?",
+        "CoreFeatures" => string.IsNullOrWhiteSpace(CoreFeatures)
+            ? "Help me define the core features for my project's v1. What should be included versus saved for later, and how do I avoid scope creep?"
+            : $"Here are the core features I've identified:\n{CoreFeatures}\n\nDoes this feel like a well-scoped v1? Am I missing anything essential, or including things that could wait?",
+        "OutOfScope" => string.IsNullOrWhiteSpace(OutOfScope)
+            ? "Help me think through what to explicitly exclude from my project's initial scope. What are common scope creep traps I should watch out for?"
+            : $"Here's what I've put explicitly out of scope:\n{OutOfScope}\n\nDoes this look right? Are there other things I should consider excluding to keep the initial scope tight?",
+        "NonFunctionalRequirements" => string.IsNullOrWhiteSpace(NonFunctionalRequirements)
+            ? $"Help me identify non-functional requirements for my {Platform} project — things like performance, security, accessibility, offline support, scalability. What should I consider given my platform and target audience?"
+            : $"Here are my non-functional requirements: \"{NonFunctionalRequirements}\". Are these well-defined? What am I potentially missing?",
+        "Timeline" => string.IsNullOrWhiteSpace(Timeline)
+            ? "Help me set a realistic timeline for my project. What factors should I consider when estimating how long it will take?"
+            : $"I've estimated my timeline as: \"{Timeline}\". Does this feel realistic? What risks could affect it?",
+        "SimilarApps" => string.IsNullOrWhiteSpace(SimilarApps)
+            ? "Help me think about similar apps I should look at for reference and inspiration. What existing tools tackle similar problems, and what can I learn from them?"
+            : $"I'm using these apps as reference: \"{SimilarApps}\". What can I learn from how they approach this problem? What should I do differently?",
+        _ => string.Empty
+    };
 
     [RelayCommand]
     private void CopyChatMessage(string content)

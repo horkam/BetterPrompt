@@ -567,13 +567,46 @@
                                        Foreground="{DynamicResource TextMuted}" Margin="0,0,0,8"/>
                             <Border Background="{DynamicResource BgCard}" CornerRadius="4" Padding="14" Margin="0,0,0,16">
                                 <StackPanel>
-                                    <Label Content="Project Name" Padding="0,0,0,4"/>
+                                    <Grid Margin="0,0,0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0" Content="Project Name" Padding="0" VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1" Content="?" ToolTip="Ask AI about project naming"
+                                                Style="{DynamicResource SecondaryButton}"
+                                                Command="{Binding NewProject.AskAboutFieldCommand}"
+                                                CommandParameter="ProjectName"
+                                                Padding="6,2" FontSize="10"/>
+                                    </Grid>
                                     <TextBox Text="{Binding NewProject.ProjectName, UpdateSourceTrigger=PropertyChanged}"
                                              Margin="0,0,0,12"/>
-                                    <Label Content="One-line description" Padding="0,0,0,4"/>
+                                    <Grid Margin="0,0,0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0" Content="One-line description" Padding="0" VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1" Content="?" ToolTip="Ask AI about your project description"
+                                                Style="{DynamicResource SecondaryButton}"
+                                                Command="{Binding NewProject.AskAboutFieldCommand}"
+                                                CommandParameter="Description"
+                                                Padding="6,2" FontSize="10"/>
+                                    </Grid>
                                     <TextBox Text="{Binding NewProject.Description, UpdateSourceTrigger=PropertyChanged}"
                                              Margin="0,0,0,12"/>
-                                    <Label Content="Primary goal — what problem does this solve?" Padding="0,0,0,4"/>
+                                    <Grid Margin="0,0,0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0" Content="Primary goal — what problem does this solve?" Padding="0" VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1" Content="?" ToolTip="Ask AI about your project goal"
+                                                Style="{DynamicResource SecondaryButton}"
+                                                Command="{Binding NewProject.AskAboutFieldCommand}"
+                                                CommandParameter="Goal"
+                                                Padding="6,2" FontSize="10"/>
+                                    </Grid>
                                     <TextBox Text="{Binding NewProject.Goal, UpdateSourceTrigger=PropertyChanged}"
                                              AcceptsReturn="True" TextWrapping="Wrap" Height="72"
                                              VerticalScrollBarVisibility="Auto"/>
@@ -585,7 +618,18 @@
                                        Foreground="{DynamicResource TextMuted}" Margin="0,0,0,8"/>
                             <Border Background="{DynamicResource BgCard}" CornerRadius="4" Padding="14" Margin="0,0,0,16">
                                 <StackPanel>
-                                    <Label Content="Who are the target users?" Padding="0,0,0,4"/>
+                                    <Grid Margin="0,0,0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0" Content="Who are the target users?" Padding="0" VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1" Content="?" ToolTip="Ask AI about your target audience"
+                                                Style="{DynamicResource SecondaryButton}"
+                                                Command="{Binding NewProject.AskAboutFieldCommand}"
+                                                CommandParameter="TargetAudience"
+                                                Padding="6,2" FontSize="10"/>
+                                    </Grid>
                                     <TextBox Text="{Binding NewProject.TargetAudience, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
                             </Border>
@@ -595,14 +639,47 @@
                                        Foreground="{DynamicResource TextMuted}" Margin="0,0,0,8"/>
                             <Border Background="{DynamicResource BgCard}" CornerRadius="4" Padding="14" Margin="0,0,0,16">
                                 <StackPanel>
-                                    <Label Content="Platform" Padding="0,0,0,4"/>
+                                    <Grid Margin="0,0,0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0" Content="Platform" Padding="0" VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1" Content="?" ToolTip="Ask AI about platform considerations"
+                                                Style="{DynamicResource SecondaryButton}"
+                                                Command="{Binding NewProject.AskAboutFieldCommand}"
+                                                CommandParameter="Platform"
+                                                Padding="6,2" FontSize="10"/>
+                                    </Grid>
                                     <ComboBox ItemsSource="{Binding NewProject.PlatformOptions}"
                                               SelectedItem="{Binding NewProject.Platform}"
                                               Margin="0,0,0,12"/>
-                                    <Label Content="Primary language / framework  (e.g. C# / WPF, TypeScript / React)" Padding="0,0,0,4"/>
+                                    <Grid Margin="0,0,0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0" Content="Primary language / framework  (e.g. C# / WPF, TypeScript / React)" Padding="0" VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1" Content="?" ToolTip="Ask AI about language and framework choices"
+                                                Style="{DynamicResource SecondaryButton}"
+                                                Command="{Binding NewProject.AskAboutFieldCommand}"
+                                                CommandParameter="Language"
+                                                Padding="6,2" FontSize="10"/>
+                                    </Grid>
                                     <TextBox Text="{Binding NewProject.Language, UpdateSourceTrigger=PropertyChanged}"
                                              Margin="0,0,0,12"/>
-                                    <Label Content="Database / storage  (e.g. SQLite, PostgreSQL, None)" Padding="0,0,0,4"/>
+                                    <Grid Margin="0,0,0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0" Content="Database / storage  (e.g. SQLite, PostgreSQL, None)" Padding="0" VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1" Content="?" ToolTip="Ask AI about database and storage options"
+                                                Style="{DynamicResource SecondaryButton}"
+                                                Command="{Binding NewProject.AskAboutFieldCommand}"
+                                                CommandParameter="Database"
+                                                Padding="6,2" FontSize="10"/>
+                                    </Grid>
                                     <TextBox Text="{Binding NewProject.Database, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
                             </Border>
@@ -612,11 +689,33 @@
                                        Foreground="{DynamicResource TextMuted}" Margin="0,0,0,8"/>
                             <Border Background="{DynamicResource BgCard}" CornerRadius="4" Padding="14" Margin="0,0,0,16">
                                 <StackPanel>
-                                    <Label Content="Core features  (one per line)" Padding="0,0,0,4"/>
+                                    <Grid Margin="0,0,0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0" Content="Core features  (one per line)" Padding="0" VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1" Content="?" ToolTip="Ask AI to help define your core features"
+                                                Style="{DynamicResource SecondaryButton}"
+                                                Command="{Binding NewProject.AskAboutFieldCommand}"
+                                                CommandParameter="CoreFeatures"
+                                                Padding="6,2" FontSize="10"/>
+                                    </Grid>
                                     <TextBox Text="{Binding NewProject.CoreFeatures, UpdateSourceTrigger=PropertyChanged}"
                                              AcceptsReturn="True" TextWrapping="Wrap" Height="100"
                                              VerticalScrollBarVisibility="Auto" Margin="0,0,0,12"/>
-                                    <Label Content="Explicitly out of scope  (one per line)" Padding="0,0,0,4"/>
+                                    <Grid Margin="0,0,0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0" Content="Explicitly out of scope  (one per line)" Padding="0" VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1" Content="?" ToolTip="Ask AI about what to exclude from scope"
+                                                Style="{DynamicResource SecondaryButton}"
+                                                Command="{Binding NewProject.AskAboutFieldCommand}"
+                                                CommandParameter="OutOfScope"
+                                                Padding="6,2" FontSize="10"/>
+                                    </Grid>
                                     <TextBox Text="{Binding NewProject.OutOfScope, UpdateSourceTrigger=PropertyChanged}"
                                              AcceptsReturn="True" TextWrapping="Wrap" Height="72"
                                              VerticalScrollBarVisibility="Auto"/>
@@ -628,14 +727,47 @@
                                        Foreground="{DynamicResource TextMuted}" Margin="0,0,0,8"/>
                             <Border Background="{DynamicResource BgCard}" CornerRadius="4" Padding="14" Margin="0,0,0,16">
                                 <StackPanel>
-                                    <Label Content="Non-functional requirements  (performance, security, offline support, etc.)" Padding="0,0,0,4"/>
+                                    <Grid Margin="0,0,0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0" Content="Non-functional requirements  (performance, security, offline support, etc.)" Padding="0" VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1" Content="?" ToolTip="Ask AI about non-functional requirements"
+                                                Style="{DynamicResource SecondaryButton}"
+                                                Command="{Binding NewProject.AskAboutFieldCommand}"
+                                                CommandParameter="NonFunctionalRequirements"
+                                                Padding="6,2" FontSize="10"/>
+                                    </Grid>
                                     <TextBox Text="{Binding NewProject.NonFunctionalRequirements, UpdateSourceTrigger=PropertyChanged}"
                                              AcceptsReturn="True" TextWrapping="Wrap" Height="72"
                                              VerticalScrollBarVisibility="Auto" Margin="0,0,0,12"/>
-                                    <Label Content="Estimated timeline  (e.g. 2 weeks, 3 months)" Padding="0,0,0,4"/>
+                                    <Grid Margin="0,0,0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0" Content="Estimated timeline  (e.g. 2 weeks, 3 months)" Padding="0" VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1" Content="?" ToolTip="Ask AI about setting a realistic timeline"
+                                                Style="{DynamicResource SecondaryButton}"
+                                                Command="{Binding NewProject.AskAboutFieldCommand}"
+                                                CommandParameter="Timeline"
+                                                Padding="6,2" FontSize="10"/>
+                                    </Grid>
                                     <TextBox Text="{Binding NewProject.Timeline, UpdateSourceTrigger=PropertyChanged}"
                                              Margin="0,0,0,12"/>
-                                    <Label Content="Similar apps / reference  (for inspiration or comparison)" Padding="0,0,0,4"/>
+                                    <Grid Margin="0,0,0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0" Content="Similar apps / reference  (for inspiration or comparison)" Padding="0" VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1" Content="?" ToolTip="Ask AI about similar apps and reference projects"
+                                                Style="{DynamicResource SecondaryButton}"
+                                                Command="{Binding NewProject.AskAboutFieldCommand}"
+                                                CommandParameter="SimilarApps"
+                                                Padding="6,2" FontSize="10"/>
+                                    </Grid>
                                     <TextBox Text="{Binding NewProject.SimilarApps, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
                             </Border>
@@ -789,10 +921,11 @@
                                         </Grid.ColumnDefinitions>
                                         <TextBox Grid.Column="0"
                                                  Text="{Binding NewProject.ChatInput, UpdateSourceTrigger=PropertyChanged}"
-                                                 AcceptsReturn="False" TextWrapping="Wrap"
+                                                 AcceptsReturn="True" TextWrapping="Wrap"
                                                  MaxHeight="80" VerticalScrollBarVisibility="Auto"
                                                  FontFamily="Segoe UI" FontSize="12"
                                                  IsEnabled="{Binding NewProject.IsChatting, Converter={StaticResource InvBoolToVis}}"
+                                                 PreviewKeyDown="ChatInputBox_KeyDown"
                                                  x:Name="ChatInputBox"/>
                                         <Button Grid.Column="1" Content="Send"
                                                 Command="{Binding NewProject.SendChatMessageCommand}"
