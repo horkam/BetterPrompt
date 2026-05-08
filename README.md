@@ -11,7 +11,8 @@ A Windows desktop tool that helps your team write better Claude Code prompts. Po
 [![Download Installer](https://img.shields.io/github/v/release/horkam/BetterPrompt?style=for-the-badge&label=Download%20Installer&color=E8871E&logo=windows&logoColor=white)](https://github.com/horkam/BetterPrompt/releases/latest/download/BetterPrompt-Setup.exe)
 &nbsp;
 [![Latest Release](https://img.shields.io/github/v/release/horkam/BetterPrompt?style=flat-square&color=555)](https://github.com/horkam/BetterPrompt/releases/latest)
-[![License](https://img.shields.io/github/license/horkam/BetterPrompt?style=flat-square)](LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=flat-square)](LICENSE)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-%E2%98%95-orange?style=flat-square)](https://github.com/sponsors/horkam)
 
 **Requirements:** Windows 10 or later (64-bit) · .NET 8 is bundled — no separate install needed
 
