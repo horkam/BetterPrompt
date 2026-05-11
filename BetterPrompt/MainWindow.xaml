@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:BetterPrompt.ViewModels"
         xmlns:conv="clr-namespace:BetterPrompt.Converters"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         mc:Ignorable="d"
         Title="BetterPrompt" Height="780" Width="1100"
         Icon="Assets/app.ico"
@@ -514,13 +515,18 @@
             <!-- PROMPT ORGANIZER TAB -->
             <TabItem Header="Prompt Organizer">
                 <Grid Margin="16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="5"/>
+                        <RowDefinition Height="200" MinHeight="100"/>
+                    </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="260"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
                     <!-- Left: Codebase panel -->
-                    <Grid Grid.Column="0" Margin="0,0,12,0">
+                    <Grid Grid.Row="0" Grid.Column="0" Margin="0,0,12,0">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
@@ -569,7 +575,7 @@
                     </Grid>
 
                     <!-- Right: Prompt panel -->
-                    <Grid Grid.Column="1">
+                    <Grid Grid.Row="0" Grid.Column="1">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
@@ -835,8 +841,88 @@
                                         Command="{Binding CopyRulesCommand}"
                                         IsEnabled="{Binding HasOptimizedPrompt}"
                                         Padding="14,8" Margin="0,6,0,0"/>
+                                <Button Content="Ask AI About Prompt"
+                                        Style="{DynamicResource SecondaryButton}"
+                                        Command="{Binding UseOptimizedPromptInChatCommand}"
+                                        IsEnabled="{Binding HasOptimizedPrompt}"
+                                        ToolTip="Copies the optimized prompt into the New Project chat input"
+                                        Padding="14,8" Margin="0,6,0,0"/>
                             </StackPanel>
                         </Grid>
+                    </Grid>
+
+                    <!-- GridSplitter between prompt area and terminal -->
+                    <GridSplitter Grid.Row="1" Grid.ColumnSpan="2"
+                                  Height="5" HorizontalAlignment="Stretch"
+                                  Background="{DynamicResource Border}"
+                                  Cursor="SizeNS"/>
+
+                    <!-- Terminal panel -->
+                    <Grid Grid.Row="2" Grid.ColumnSpan="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Terminal header -->
+                        <Grid Grid.Row="0" Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="TERMINAL"
+                                       FontFamily="Segoe UI Semibold" FontSize="10"
+                                       Foreground="{DynamicResource TextMuted}"
+                                       VerticalAlignment="Center"/>
+                            <!-- Running indicator -->
+                            <Border Grid.Column="1" Margin="8,0,0,0" Padding="6,2" CornerRadius="3"
+                                    VerticalAlignment="Center">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="{DynamicResource BgCard}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsTerminalRunning}" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource BgGreenTint}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock FontFamily="Segoe UI" FontSize="10" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="Stopped"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsTerminalRunning}" Value="True">
+                                                    <Setter Property="Text" Value="Running"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource Green}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+                            <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="Restart"
+                                        Style="{DynamicResource SecondaryButton}"
+                                        Command="{Binding RestartTerminalCommand}"
+                                        Padding="10,4" FontSize="10" Margin="0,0,6,0"/>
+                                <Button Content="Open in Window"
+                                        Style="{DynamicResource SecondaryButton}"
+                                        Command="{Binding OpenExternalTerminalCommand}"
+                                        ToolTip="Opens a full terminal window for interactive commands (e.g. claude)"
+                                        Padding="10,4" FontSize="10" Margin="0,0,6,0"/>
+                                <Button Content="Send Prompt to Claude Code"
+                                        Command="{Binding SendPromptToTerminalCommand}"
+                                        IsEnabled="{Binding HasOptimizedPrompt}"
+                                        Padding="12,4" FontSize="11"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- xterm.js terminal rendered in WebView2 -->
+                        <wv2:WebView2 Grid.Row="1" x:Name="TerminalWebView"/>
                     </Grid>
                 </Grid>
             </TabItem>

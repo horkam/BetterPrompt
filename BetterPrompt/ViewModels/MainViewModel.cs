@@ -16,6 +16,7 @@ public partial class MainViewModel : ObservableObject
     private readonly LearningStore _learningStore;
     private readonly OllamaOptimizer _ollamaOptimizer;
     private readonly UpdateService _updateService;
+    private readonly ConPtyService _conPtyService = new();
 
     private PromptOptimizerService? _optimizer;
     private CodebaseContext? _context;
@@ -56,6 +57,11 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<string> _changes = [];
     [ObservableProperty] private ObservableCollection<string> _fileTree = [];
     [ObservableProperty] private AppTheme _currentTheme;
+    [ObservableProperty] private bool _isTerminalRunning;
+
+    // View subscribes to these to bridge ConPTY output into WebView2 / xterm.js
+    public event Action<byte[]>? TerminalOutputReceived;
+    public event Action? TerminalCleared;
     [ObservableProperty] private bool _updateAvailable;
     [ObservableProperty] private bool _updateChecked;
     [ObservableProperty] private string _latestVersion = string.Empty;
@@ -174,6 +180,10 @@ public partial class MainViewModel : ObservableObject
         // Set backing field directly — theme was already applied by App.OnStartup
         _currentTheme = Settings.Theme;
 
+        _conPtyService.OutputReceived += data => TerminalOutputReceived?.Invoke(data);
+        _conPtyService.ProcessExited  += () =>
+            Application.Current.Dispatcher.Invoke(() => IsTerminalRunning = false);
+
         _ = CheckOllamaAsync();
         _ = CheckForUpdatesAsync();
         _ = AutoIndexLastAsync();
@@ -254,6 +264,7 @@ public partial class MainViewModel : ObservableObject
             HasCodebase = true;
             Settings.LastCodebasePath = CodebasePath;
             _settingsService.Save(Settings);
+            StartTerminalInDirectory(CodebasePath);
         }
         catch (Exception ex)
         {
@@ -351,6 +362,18 @@ public partial class MainViewModel : ObservableObject
                    string.Join("\n", Changes.Select(c => $"- {c}"));
         Clipboard.SetText(text);
         StatusMessage = $"Copied {Changes.Count} rules to clipboard.";
+    }
+
+    [RelayCommand]
+    private void UseOptimizedPromptInChat()
+    {
+        if (string.IsNullOrWhiteSpace(OptimizedPrompt)) return;
+        if (!_conPtyService.IsRunning)
+        {
+            StatusMessage = "Terminal is not running. Index a codebase first.";
+            return;
+        }
+        _conPtyService.Write(OptimizedPrompt);
     }
 
     [RelayCommand]
@@ -501,6 +524,78 @@ public partial class MainViewModel : ObservableObject
         CurrentCachedEntryId = string.Empty;
         RefreshCacheEntries();
         StatusMessage = "Learning cache cleared.";
+    }
+
+    private void StartTerminalInDirectory(string directory)
+    {
+        try
+        {
+            TerminalCleared?.Invoke();
+            _conPtyService.Start(directory);
+            IsTerminalRunning = true;
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Terminal failed to start: {ex.Message}";
+            IsTerminalRunning = false;
+        }
+    }
+
+    // Called from View when xterm.js sends keystrokes (raw UTF-8 bytes, base64-decoded)
+    public void SendRawInput(byte[] data) => _conPtyService.Write(data);
+
+    // Called from View when xterm.js reports a resize
+    public void ResizeTerminal(int cols, int rows) => _conPtyService.Resize(cols, rows);
+
+    [RelayCommand]
+    private void RestartTerminal()
+    {
+        if (string.IsNullOrWhiteSpace(CodebasePath) || !Directory.Exists(CodebasePath))
+        {
+            StatusMessage = "No codebase directory to start terminal in.";
+            return;
+        }
+        StartTerminalInDirectory(CodebasePath);
+    }
+
+    [RelayCommand]
+    private void SendPromptToTerminal()
+    {
+        if (string.IsNullOrWhiteSpace(OptimizedPrompt)) return;
+        if (!_conPtyService.IsRunning)
+        {
+            StatusMessage = "Terminal is not running. Index a codebase first.";
+            return;
+        }
+
+        // Write to a temp file to avoid shell escaping, then type the claude command + Enter.
+        // With ConPTY the terminal is a real TTY, so claude runs interactively.
+        var tempFile = Path.Combine(Path.GetTempPath(), "betterprompt_prompt.txt");
+        File.WriteAllText(tempFile, OptimizedPrompt, System.Text.Encoding.UTF8);
+        var escaped = tempFile.Replace("'", "''");
+        _conPtyService.Write($"claude (Get-Content -Raw '{escaped}')\r");
+    }
+
+    [RelayCommand]
+    private void OpenExternalTerminal()
+    {
+        var dir = CodebasePath;
+        if (string.IsNullOrWhiteSpace(dir) || !Directory.Exists(dir))
+            dir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+        var wtPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            @"Microsoft\WindowsApps\wt.exe");
+
+        if (File.Exists(wtPath))
+            Process.Start(new ProcessStartInfo { FileName = wtPath, Arguments = $"-d \"{dir}\"", UseShellExecute = true });
+        else
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "powershell.exe",
+                Arguments = $"-NoExit -Command \"Set-Location '{dir.Replace("'", "''")}' \"",
+                UseShellExecute = true,
+            });
     }
 
     private void RefreshCacheEntries()
