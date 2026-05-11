@@ -99,6 +99,17 @@ After each optimization, a stats strip shows:
 - Whether the result came from the learning cache (and the similarity score)
 - Characters removed vs. original
 
+### Embedded Terminal
+The Prompt Organizer tab includes a fully interactive terminal panel powered by the Windows ConPTY API and rendered with [xterm.js](https://xtermjs.org) inside a WebView2 control.
+
+- Automatically starts PowerShell in the indexed codebase directory when indexing completes
+- Full PTY support — arrow keys, tab completion, colors, and interactive CLI tools like `claude` all work correctly
+- Resizable via a drag splitter between the prompt area and the terminal
+- **Send Prompt to Claude Code** — types `claude <optimized prompt>` directly into the terminal and presses Enter
+- **Ask AI About Prompt** — pastes the optimized prompt text at the current terminal cursor without submitting, so you can review or prepend a command first
+- **Restart** — kills and restarts the terminal session in the current codebase directory
+- **Open in Window** — opens Windows Terminal (or PowerShell) in an external window for tasks that need more space
+
 ---
 
 ## Getting Started
@@ -146,7 +157,16 @@ To cut a specific version manually, use the **Manual Release** workflow from the
 2. **Index** — click Index Codebase. Progress is shown in the status bar. Indexing a typical project takes a few seconds.
 3. **Enter your prompt** — type a rough, natural-language request in the left panel.
 4. **Optimize** — click Optimize Prompt. The right panel shows the result with the source label (Rules / Rules + Ollama / Cache).
-5. **Copy** — click Copy Prompt and paste into Claude Code.
+5. **Copy** — click Copy Prompt and paste into Claude Code, or use one of the terminal buttons to send it directly.
+
+### Terminal workflow
+
+After indexing, the terminal at the bottom of the Prompt Organizer tab is ready to use:
+
+1. Optimize your prompt as usual.
+2. Click **Send Prompt to Claude Code** to run it immediately, or **Ask AI About Prompt** to paste the text for manual editing.
+3. Interact with Claude Code in the terminal as normal — the PTY gives it a real TTY so interactive mode works.
+4. If you need more terminal space, click **Open in Window** to pop out to a full Windows Terminal session.
 
 ### Tips
 
@@ -224,6 +244,7 @@ BetterPrompt/
 ├── Services/
 │   ├── CodebaseIndexer.cs          # Walks the codebase and extracts signatures
 │   ├── CodebaseSearcher.cs         # Scores files/classes/methods against keywords
+│   ├── ConPtyService.cs            # Windows ConPTY wrapper (pseudo-console + pipe I/O)
 │   ├── KeywordExpander.cs          # Synonym expansion (static clusters + Ollama)
 │   ├── LearningStore.cs            # Read/write .betterPrompt/learning.json
 │   ├── OllamaOptimizer.cs          # HTTP client for the Ollama /api/chat endpoint
@@ -246,6 +267,8 @@ BetterPrompt/
 
 - **.NET 8 / WPF** — Windows desktop UI
 - **CommunityToolkit.Mvvm** — source-generated observable properties and relay commands
+- **Windows ConPTY** — pseudo-console API for real PTY support in the embedded terminal
+- **Microsoft WebView2 + xterm.js** — Chromium-based terminal renderer with full ANSI/VT support
 - **Ollama** — local LLM inference, completely free and offline
 - **System.Text.Json** — settings and learning store serialization
 - No cloud APIs. No telemetry. No accounts.
